@@ -161,8 +161,6 @@ generate it fresh with this shape:
 ## Engineering
 - [Standards](.claude/engineering/standards.md) — Coding conventions and patterns
 - [Testing](.claude/engineering/testing.md) — Test strategy and commands
-[If .claude/engineering/agent-triggers.md exists, add this line too:]
-- [Agent Triggers](.claude/engineering/agent-triggers.md) — when to delegate to a specialized subagent
 ```
 
 Note all links are relative to the repo root (`.claude/business/...`), not to `.claude/` itself.

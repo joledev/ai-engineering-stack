@@ -4,7 +4,23 @@ Central AI stack for all engineering projects: global rules, specialized agents,
 
 **Claude Code only.** Support for Windsurf, OpenCode, and other editors was removed — everything here targets Claude Code's own conventions (`.claude/commands/`, `.claude/agents/`, root `CLAUDE.md`).
 
-## Installation
+## Global layer (once per machine)
+
+```bash
+~/dev/personal/ai-engineering-stack/install-global.sh
+```
+
+- Symlinks `~/.claude/agents` to `global/agents/`: software-architect,
+  business-analyst, code-reviewer, security-auditor, debugger, test-writer.
+  An existing `~/.claude/agents` directory is moved to `agents.bak-<timestamp>`.
+- Sets `"agent": "software-architect"` in `~/.claude/settings.json` with `jq`,
+  so every session runs as the architect. Other keys are left untouched.
+- Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
+  the tokens live in `~/.claude.json` and never in this repo.
+
+Safe to re-run. Agents update with `git pull`, since they are a symlink.
+
+## Installation (per project)
 
 Use the init script rather than symlinking by hand. It wires the symlinks, the
 context tree, the gitignore entries, and the Obsidian bridge in one pass.
@@ -22,16 +38,16 @@ context tree, the gitignore entries, and the Obsidian bridge in one pass.
 
 ### `--stack` — install only what the project needs
 
-Every skill and agent declares a `stacks:` field in its frontmatter, and the init
+Every skill declares a `stacks:` field in its frontmatter, and the init
 script links only the matching ones. An Android project has no use for
-`audit-layer-boundaries`, and a .NET project has none for `mobile-ui-expert`.
+`audit-layer-boundaries`. Agents are not per project: see Global layer.
 
-| `--stack` | skills | agents |
-|-----------|--------|--------|
-| `web`     | 17 | 11 |
-| `dotnet`  | 18 | 10 |
-| `android` | 18 | 10 |
-| `all`     | 20 | 12 |
+| `--stack` | skills |
+|-----------|--------|
+| `web`     | 15 |
+| `dotnet`  | 16 |
+| `android` | 16 |
+| `all`     | 18 |
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`.
@@ -41,9 +57,7 @@ to `dotnet`.
 1. Open Claude Code in the project and run `/fill-context`. It scans the codebase,
    asks what the code cannot tell it, and writes the `.claude/` context tree with
    the root `CLAUDE.md` as its index.
-2. Optionally run `/fill-triggers` to generate `.claude/engineering/agent-triggers.md` —
-   an explicit table of which paths delegate to which agent.
-3. For a brand-new project, `/project-bootstrap` scaffolds the skeleton plus one
+2. For a brand-new project, `/project-bootstrap` scaffolds the skeleton plus one
    vertical slice end to end.
 
 ### What gets committed
@@ -104,18 +118,18 @@ docs and media. Keep `graphify-out/` out of version control.
 
 ## Skills
 
-20 skills across 4 categories. Each category directory has its own README with
+18 skills across 4 categories. Each category directory has its own README with
 one-line descriptions.
 
-### `engineering/` (14)
+### `engineering/` (13)
 Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-architecture**,
 **android-clean-architecture** — plus **sdd-apply**, **prd-to-github-backlog**,
-**project-bootstrap**, **fill-context**, **fill-triggers**, **tdd**, **diagnose**,
+**project-bootstrap**, **fill-context**, **tdd**, **diagnose**,
 **grill-with-docs**, **improve-codebase-architecture**,
 **prompt-rewrite**, **sdd-verify**.
 
-### `productivity/` (4)
-**caveman**, **grill-me**, **handoff**, **project-workflows**.
+### `productivity/` (3)
+**caveman**, **grill-me**, **handoff**.
 
 `ponytail` is no longer vendored here — it is installed as a Claude Code plugin.
 
@@ -124,21 +138,18 @@ See [misc/README.md](./skills/misc/README.md) and [personal/README.md](./skills/
 
 ## Agents
 
-Agents set the behavior, expertise, and mindset for a session. Invoke one when
-the work calls for a specific engineering focus.
+Installed at user level by `install-global.sh` (`global/agents/`). The main
+session always runs as `software-architect`, which writes the feature code and
+dispatches the rest as subagents: one prompt in, one report back.
 
-| Agent | Focus | Stacks |
-|-------|-------|--------|
-| **backend-architect** | Database design, API reliability, data integrity | dotnet, web |
-| **frontend-architect** | UI/UX, React state management, component modularity | web |
-| **mobile-ui-expert** | Mobile-first design, touch interfaces, mobile performance | android |
-| **system-architect** | High-level system design, boundaries, long-term strategy | all |
-| **security-engineer** | Vulnerabilities, sanitization, security policy | all |
-| **performance-engineer** | Profiling, rendering, query and load-time optimization | all |
-| **refactoring-expert** | Technical debt, SOLID, simplifying complex logic | all |
-| **deep-research-agent** / **tech-stack-researcher** | Exhaustive research before writing code | all |
-| **requirements-analyst** / **technical-writer** | PRDs, documentation, ADRs | all |
-| **learning-guide** | Explains progressively instead of just writing the code | all |
+| Agent | Role |
+|-------|------|
+| **software-architect** | Main session. Designs, implements, routes work to the others |
+| **business-analyst** | Vague ask to spec plus Given/When/Then acceptance criteria |
+| **code-reviewer** | Read-only. Reviews a diff against the AC and a code-quality spec |
+| **security-auditor** | Read-only. Critical/high issues on auth and untrusted input |
+| **debugger** | Root cause of a failing test or wrong behavior, minimal fix |
+| **test-writer** | Behavioral tests in the project's existing framework |
 
 ## Key Files
 

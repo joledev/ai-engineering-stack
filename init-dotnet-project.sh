@@ -54,17 +54,6 @@ link_stack_skills() {
     done
 }
 
-link_stack_agents() {
-    local dest="$1" f
-    LINKED_AGENTS=0
-    mkdir -p "$dest"
-    for f in "$STACK_DIR/agents"/*.md; do
-        stack_match "$f" || continue
-        ln -sfn "$f" "$dest/$(basename "$f")"
-        LINKED_AGENTS=$((LINKED_AGENTS + 1))
-    done
-}
-
 
 echo "Initializing .NET AI Stack for project: $PROJECT_NAME at $TARGET_DIR"
 
@@ -74,19 +63,19 @@ cd "$TARGET_DIR" || { echo "Failed to cd to $TARGET_DIR"; exit 1; }
 # 1. Setup Claude Code symlinks
 mkdir -p .claude .agents
 
-# Remove old links, including names used before the Claude-Code-only migration
+# Remove old links, including names used before the Claude-Code-only migration.
+# .claude/agents held per-project agent links; agents now live at user level (install-global.sh).
 rm -rf .claude/commands .claude/agents .agents/skills
 rm -f .claude/skills .claude/personas .claude/recipes
 rm -f .agents/personas .agents/agents .agents/recipes
 
 link_stack_skills ".claude/commands"
-link_stack_agents  ".claude/agents"
 
 # The external .NET skills repo carries no stacks: frontmatter — it is all .NET
 # by definition, so it links wholesale.
 ln -s "$DOTNET_SKILLS_DIR/skills"  ".claude/commands/dotnet"
 ln -s "$DOTNET_SKILLS_DIR/recipes" ".claude/recipes"
-echo "OK: Linked $LINKED_SKILLS skills and $LINKED_AGENTS agents for stack '$STACK', plus the .NET skills repo"
+echo "OK: Linked $LINKED_SKILLS skills for stack '$STACK', plus the .NET skills repo"
 
 # 2. Setup .claude/ context subdirectories
 for context_dir in .claude/business .claude/architecture .claude/domains .claude/engineering; do

@@ -9,4 +9,3 @@ drifts from upstream. `sdd-apply` and `project-bootstrap` still invoke it.
 - **[caveman](./caveman/SKILL.md)** — Ultra-compressed communication mode. Cuts token usage ~75% by dropping filler while keeping full technical accuracy.
 - **[grill-me](./grill-me/SKILL.md)** — Get relentlessly interviewed about a plan or design until every branch of the decision tree is resolved.
 - **[handoff](./handoff/SKILL.md)** — Compact the current conversation into a handoff document another agent can pick up from.
-- **[project-workflows](./project-workflows/SKILL.md)** — Generate a project-specific WORKFLOWS.md mapping named slash-command chains to the agents and skills that fit that stack.

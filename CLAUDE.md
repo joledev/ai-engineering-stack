@@ -6,15 +6,21 @@ them into a project. There is no application here — it is markdown and bash.
 ## Layout
 
 ```
-skills/<category>/<name>/SKILL.md   20 skills across 4 categories
-agents/<name>.md                    12 subagents
+skills/<category>/<name>/SKILL.md   18 skills across 4 categories
+global/agents/<name>.md             6-agent team, user-level (all projects)
 init-project.sh                     project setup, --stack aware
 init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
+install-global.sh                   user-level setup, once per machine
 global-rules.md                     engineering standards shipped to projects
 ```
 
-`skills/` and `agents/` are symlinked into a target project as
-`.claude/commands` and `.claude/agents` by the init scripts.
+`skills/` is symlinked into a target project as `.claude/commands` by the init
+scripts. There are no per-project agents.
+
+`global/agents/` is symlinked as `~/.claude/agents` by `install-global.sh`, which
+also sets `"agent": "software-architect"` in `~/.claude/settings.json`. That
+setting applies to every session, including folders never init'ed, so the
+architect must live at user level.
 
 ## Commands
 
@@ -31,7 +37,7 @@ and clean up after.
 
 ## Conventions
 
-**Every skill and agent declares `stacks:` in its frontmatter.** The init
+**Every skill declares `stacks:` in its frontmatter.** The init
 scripts read it and link only what matches `--stack`, so a .NET project does
 not receive `audit-layer-boundaries`. Valid values: `all`, `web`, `dotnet`, `android`. `all`
 is exclusive — never combine it with another value.
@@ -46,6 +52,9 @@ description: One line. This is what makes Claude load the skill, so say when to 
 
 A skill with no `description` is never surfaced. A skill with no `stacks:` is
 silently dropped from every filtered install.
+
+Agents in `global/agents/` have no `stacks:`. Nothing filters them; every
+machine gets the whole team.
 
 **Claude Code only.** Support for Windsurf and OpenCode was removed; do not
 reintroduce `.windsurf/`, `.opencode/` or their rules files.
