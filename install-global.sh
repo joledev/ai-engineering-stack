@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Installs the user-level layer once per machine: the agent team in
-# global/agents/ and the main-session agent in settings.json.
+# global/agents/, the skills every session needs, and the main-session agent.
 # Safe to re-run. Respects CLAUDE_CONFIG_DIR (defaults to ~/.claude).
 set -euo pipefail
 
@@ -28,7 +28,30 @@ else
     echo "agents: $AGENTS -> $SRC"
 fi
 
-# 2. Main-session agent: merge one key, keep everything else in settings.json
+# 2. Skills available in every session, not only in init'ed projects.
+#    A real directory with the same name is left alone (it is not ours to replace).
+GLOBAL_SKILLS=(
+    engineering/fill-context
+    engineering/prd-to-github-backlog
+    engineering/sdd-apply
+    engineering/sdd-verify
+    productivity/grill-me
+    productivity/handoff
+)
+mkdir -p "$CLAUDE_DIR/skills"
+LINKED=0
+for s in "${GLOBAL_SKILLS[@]}"; do
+    dest="$CLAUDE_DIR/skills/$(basename "$s")"
+    if [ -e "$dest" ] && [ ! -L "$dest" ]; then
+        echo "skills: $dest is a real directory, skipped"
+        continue
+    fi
+    ln -sfn "$STACK_DIR/skills/$s" "$dest"
+    LINKED=$((LINKED + 1))
+done
+echo "skills: $LINKED linked into $CLAUDE_DIR/skills"
+
+# 3. Main-session agent: merge one key, keep everything else in settings.json
 [ -f "$SETTINGS" ] || echo '{}' > "$SETTINGS"
 if [ "$(jq -r '.agent // empty' "$SETTINGS")" = "$MAIN_AGENT" ]; then
     echo "settings: agent already $MAIN_AGENT"
@@ -40,7 +63,7 @@ else
     echo "settings: agent set to $MAIN_AGENT"
 fi
 
-# 3. MCP servers hold tokens in ~/.claude.json, so they are never scripted here.
+# 4. MCP servers hold tokens in ~/.claude.json, so they are never scripted here.
 cat <<'EOF'
 
 MCP servers (run by hand, once per machine):

@@ -13,6 +13,9 @@ Central AI stack for all engineering projects: global rules, specialized agents,
 - Symlinks `~/.claude/agents` to `global/agents/`: software-architect,
   business-analyst, code-reviewer, security-auditor, debugger, test-writer.
   An existing `~/.claude/agents` directory is moved to `agents.bak-<timestamp>`.
+- Symlinks the skills every session needs into `~/.claude/skills`: fill-context,
+  prd-to-github-backlog, sdd-apply, sdd-verify, grill-me, handoff. Stale links
+  are replaced; a real directory with the same name is skipped.
 - Sets `"agent": "software-architect"` in `~/.claude/settings.json` with `jq`,
   so every session runs as the architect. Other keys are left untouched.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
