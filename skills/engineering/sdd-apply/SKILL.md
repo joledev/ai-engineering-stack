@@ -14,7 +14,8 @@ implement just that one task through the same phases. **Applies ponytail princip
 ## Execution model
 
 ```
-Phase 0  Resolve  → Story# + ordered list of its open Task sub-issues; set up the Story branch
+Phase 0  Resolve  → Story# + ordered list of its open Task sub-issues; set up the Story branch;
+                    AC missing/untestable → business-analyst drafts them ⏸ STOP for approval
 FOR each Task (in dependency order):
     Phase 1  Explore   (no stop gate — report and continue)
     Phase 2  Propose   ⏸ STOP: wait for OK before writing code
@@ -103,6 +104,25 @@ Resolve via the **manifest as a cache, verified against the live board** (the ch
    git checkout <BASE> && git pull
    git checkout -b feat/<STORY_ID>   # e.g. feat/BE-AUTH-1  (reuse if it already exists)
    ```
+
+8. **Check the Story's acceptance criteria** — once per Story, since every task and `sdd-verify`
+   are judged against them:
+   ```bash
+   gh issue view <story#> --repo <owner/repo> --json body --jq '.body'
+   ```
+   Testable means Given/When/Then with an observable outcome. If they are present and testable,
+   continue. If they are missing or untestable (e.g. "works well", "good UX"):
+   - Dispatch `business-analyst`. It cannot see this conversation or run `gh`, so the prompt
+     carries the Story body and the Epic body verbatim, plus the paths to `CLAUDE.md` and
+     `business/rules.md`. Ask for Given/When/Then criteria returned in the report, no files written.
+   - Show them to the user. **STOP** and wait for approval or edits.
+   - Once approved, append them to the Story under `## Acceptance criteria` so `sdd-verify` reads
+     the same ones:
+     ```bash
+     gh issue view <story#> --repo <owner/repo> --json body --jq '.body' > /tmp/story-<story#>.md
+     # append the approved criteria to that file, then:
+     gh issue edit <story#> --repo <owner/repo> --body-file /tmp/story-<story#>.md
+     ```
 
 **Single-task input:** if the user explicitly named one Task ID/number and asked for just that,
 set the task list to that one task (still on the Story branch).
