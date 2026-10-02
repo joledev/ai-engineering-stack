@@ -33,6 +33,7 @@ fi
 GLOBAL_SKILLS=(
     engineering/fill-context
     engineering/prd-to-github-backlog
+    engineering/prompt-rewrite
     engineering/sdd-apply
     engineering/sdd-verify
     productivity/grill-me
