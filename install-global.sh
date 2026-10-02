@@ -82,7 +82,14 @@ else
     echo "statusline: linked and set in settings"
 fi
 
-# 5. MCP servers hold tokens in ~/.claude.json, so they are never scripted here.
+# 5. engram: subagent memory (code-reviewer lists mcp__engram__* tools). Checked, never installed here.
+if command -v engram >/dev/null; then
+    echo "engram: $(engram version 2>/dev/null || echo installed)"
+else
+    echo "engram: NOT installed, code-reviewer memory tools will be missing (commands below)"
+fi
+
+# 6. MCP servers write to ~/.claude.json (some hold tokens), so they are never scripted here.
 cat <<'EOF'
 
 MCP servers (run by hand, once per machine):
@@ -93,5 +100,11 @@ MCP servers (run by hand, once per machine):
   # GitHub: fine-grained PAT, read-only Contents/Issues/PRs. Do not use `read -s`, the paste breaks.
   read "GH?Paste PAT: " && [[ $GH == github_pat_* ]] && claude mcp add --scope user --transport http github https://api.githubcopilot.com/mcp --header "Authorization: Bearer ${GH//[[:space:]]/}"; unset GH; clear
 
-  claude mcp list   # both should show Connected
+  # engram: subagent memory. Setup registers the MCP as `engram mcp --tools=agent`.
+  brew install gentleman-programming/tap/engram
+  claude plugin marketplace add Gentleman-Programming/engram
+  claude plugin install engram@engram
+  engram setup claude-code
+
+  claude mcp list   # context7, github and engram should show Connected
 EOF

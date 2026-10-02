@@ -66,10 +66,12 @@ Installed as a Claude Code plugin; it needs no configuration here. See the
 
 ### 2. engram
 
-Not installed by `install-global.sh`; set it up once per machine:
+`install-global.sh` checks for it and prints these commands, but never runs
+them (same rule as the other MCP servers). Run them once per machine:
 ```bash
 brew install gentleman-programming/tap/engram
-claude plugin enable engram@engram
+claude plugin marketplace add Gentleman-Programming/engram
+claude plugin install engram@engram
 engram setup claude-code      # registers the MCP: engram mcp --tools=agent
 ```
 Tool names are `mcp__engram__mem_*`; that is what `code-reviewer.md` lists.
