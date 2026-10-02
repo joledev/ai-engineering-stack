@@ -19,7 +19,7 @@ FOR each Task (in dependency order):
     Phase 1  Explore   (no stop gate — report and continue)
     Phase 2  Propose   ⏸ STOP: wait for OK before writing code
     Phase 3  Apply     → Apply with ponytail principles (laziest solution that works)
-    Phase 4  Verify    (on failure: STOP the whole Story and report — see Failure policy)
+    Phase 4  Verify    → sdd-verify (code-reviewer) [+ security-auditor]; on failure STOP the Story
     Phase 4.5 Commit   (one conventional commit per task)
     Phase 5  Archive   (comment + close the Task issue)
 Phase 6  Finish   → push the Story branch and open one PR for the Story
@@ -210,16 +210,26 @@ After each file change, state: file path + what changed + why.
 
 ## Phase 4 — Verify
 
-**Goal:** Prove the task is done against the Story's acceptance criteria.
+**Goal:** Prove the task is done against the Story's acceptance criteria, with a reviewer that did
+not write the code.
 
-Checklist:
-- [ ] Each Given/When/Then criterion from the Story is met
-- [ ] Existing tests still pass (`npm run test` / `dotnet test` / equivalent)
-- [ ] New behavior is covered by tests where a correct seam exists
-- [ ] No files outside Phase 2 scope were modified
+1. **Self-check first** (cheap, before spending a review):
+   - [ ] Existing tests still pass (`npm run test` / `dotnet test` / equivalent)
+   - [ ] New behavior is covered by tests where a correct seam exists
+   - [ ] No files outside Phase 2 scope were modified
+2. **Independent review**, uncommitted, in ONE message so they run concurrently:
+   - Invoke the `sdd-verify` skill with `<TASK_ID>`. It runs in a fresh `code-reviewer` subagent,
+     reads the Story's AC from GitHub, reviews the uncommitted diff, runs the tests, and returns
+     PASS/FAIL per criterion.
+   - **Also** dispatch `security-auditor` when the diff touches auth, sessions/tokens, permissions,
+     payments, webhooks, or untrusted input. Its prompt must stand alone: the Story's AC verbatim,
+     the diff command (`git diff HEAD`), and the paths to `CLAUDE.md` and `engineering/standards.md`.
+3. **Act on the reports:** reviewers never edit. Fix blocking findings yourself; list minor ones in
+   the Phase 5 comment instead of fixing them.
 
-**Failure policy:** If any criterion is unmet or tests fail, make **one** attempt to fix it in
-Phase 3. If it still fails, **STOP the entire Story** here — do NOT commit the failing task, leave
+**Failure policy:** If `sdd-verify` returns FAIL or the security-auditor reports a critical/high
+issue, make **one** attempt to fix it in Phase 3 and verify again. If it still fails, **STOP the
+entire Story** here — do NOT commit the failing task, leave
 already-committed tasks in place, and report: which task failed, why, and what's left. Do not move on
 to the next task.
 
@@ -253,7 +263,7 @@ Rules:
 
 1. Comment on the Task issue with a brief summary of what was implemented:
    ```bash
-   gh issue comment <task#> --repo <owner/repo> --body "Implemented: <one-line summary>. Commit: <sha>. Files changed: <list>."
+   gh issue comment <task#> --repo <owner/repo> --body "Implemented: <one-line summary>. Commit: <sha>. Files changed: <list>. Minor review notes: <list or none>."
    ```
 
 2. Close the task issue:
