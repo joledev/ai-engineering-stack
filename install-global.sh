@@ -64,7 +64,25 @@ else
     echo "settings: agent set to $MAIN_AGENT"
 fi
 
-# 4. MCP servers hold tokens in ~/.claude.json, so they are never scripted here.
+# 4. Statusline (shows the running agent): link the script, set statusLine only if none exists
+STATUSLINE="$CLAUDE_DIR/statusline-command.sh"
+if [ -e "$STATUSLINE" ] && [ ! -L "$STATUSLINE" ]; then
+    mv "$STATUSLINE" "$STATUSLINE.bak-$(date +%Y%m%d-%H%M%S)"
+    echo "statusline: existing script backed up"
+fi
+ln -sfn "$STACK_DIR/global/statusline-command.sh" "$STATUSLINE"
+if [ -n "$(jq -r '.statusLine.command // empty' "$SETTINGS")" ]; then
+    echo "statusline: linked; statusLine already configured, left as is"
+else
+    TMP="$(mktemp)"
+    jq --arg c "bash $STATUSLINE" \
+        '.statusLine = {type: "command", command: $c, refreshInterval: 3000}' "$SETTINGS" > "$TMP"
+    cat "$TMP" > "$SETTINGS"
+    rm -f "$TMP"
+    echo "statusline: linked and set in settings"
+fi
+
+# 5. MCP servers hold tokens in ~/.claude.json, so they are never scripted here.
 cat <<'EOF'
 
 MCP servers (run by hand, once per machine):

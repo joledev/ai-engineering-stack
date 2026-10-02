@@ -18,6 +18,9 @@ Central AI stack for all engineering projects: global rules, specialized agents,
   are replaced; a real directory with the same name is skipped.
 - Sets `"agent": "software-architect"` in `~/.claude/settings.json` with `jq`,
   so every session runs as the architect. Other keys are left untouched.
+- Symlinks `~/.claude/statusline-command.sh` to `global/` (repo, branch, PR,
+  running agent, model, context and rate limits; needs a Nerd Font) and sets
+  `statusLine` only when none is configured.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
   the tokens live in `~/.claude.json` and never in this repo.
 
