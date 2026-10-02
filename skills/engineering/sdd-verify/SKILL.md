@@ -39,6 +39,9 @@ gh issue view <task#>        # for a Task: its scope narrows which criteria appl
 For a raw `#N`, check its `type:*` label; a `type:task` walks up to its parent
 Story (`gh api repos/<owner/repo>/issues/<N>/parent --jq '.number'`).
 
+If several Stories match, use the open one (else the most recent) and name the
+one you used in the report.
+
 If no acceptance criteria can be found, or they are not testable (no observable
 outcome), stop and report exactly that. Do not invent criteria.
 
@@ -53,10 +56,16 @@ git diff <BASE>...HEAD         # committed on this branch
 If the working tree has changes, review those (the current task). If it is
 clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hunks.
 
+**In scope** = the lines that implement this Story/Task. If the diff also carries
+other work, review it only for the "Outside this change" section; it never
+decides the verdict.
+
 ## 3. Load the project's rules
 
-Read the root `CLAUDE.md` and the files it links under Engineering and Business,
-mainly `engineering/standards.md`, `engineering/testing.md`, `business/rules.md`.
+Find the context index: `CLAUDE.md` at the repo root, else `.claude/CLAUDE.md`,
+else the parent directory's `.claude/` (monorepo). Read it and the files it links
+under Engineering and Business, mainly `engineering/standards.md`,
+`engineering/testing.md`, `business/rules.md`.
 
 ## 4. Run the tests
 
@@ -65,38 +74,54 @@ Use the commands from `engineering/testing.md`; otherwise the project's own
 ran and the result. If they could not run, say why. Never report "tests pass"
 without running them.
 
+If a test fails, check whether it also fails without the change: run it in a
+scratch worktree (`git worktree add --detach "$(mktemp -d)" HEAD` for
+uncommitted work, `<BASE>` for committed work), then `git worktree remove` it.
+Never stash or touch the real working tree: other reviewers read it in
+parallel. Failures that already exist on the base are reported as
+**pre-existing** and do not count toward the verdict.
+
+Rely on the project's existing tests. Do not build your own harness (scratch
+apps, ad-hoc HTTP clients, containers) unless an in-scope criterion has no test
+at all; then the smallest check that proves it.
+
 ## 5. Verify
 
 - **Spec 1, acceptance criteria:** only the criteria this change is due to
-  satisfy. Check behavior, not that some code exists for it. A criterion with no
-  test proving it is at most PARTIAL.
-- **Spec 2, code quality:** duplication, naming, architecture boundaries,
-  control flow, error handling, function size, dead code, tests that exercise
-  the real path instead of a mock of it.
+  satisfy. Check behavior, not that some code exists for it.
+  ✓ = a test exercises the behavior (at any layer) and passes.
+  ~ PARTIAL = the code does it but no test proves it.
+  A layer the AC names but no test covers (e.g. the HTTP status) is a minor
+  finding, not a downgrade.
+- **Spec 2, code quality** (in-scope lines only): duplication, naming,
+  architecture boundaries, control flow, error handling, function size, dead
+  code, tests that exercise the real path instead of a mock of it.
 
 Write the reasoning before each verdict.
 
 ## 6. Report
 
 ```
-VERDICT: PASS | FAIL   <ID> — <title>
-Tests: <command> → <result>
+VERDICT: PASS | FAIL   <ID> — <title>   (Story #<n>)
+Tests: <command> → <result>   [pre-existing failures: <list or none>]
 
 Acceptance criteria
   ✓ AC1 <criterion>: <evidence, file:line>
   ✗ AC2 <criterion>: <what is missing, file:line>
   ~ AC3 <criterion>: PARTIAL, <why>
 
-Code quality (blocking first)
+Code quality, in scope (blocking first)
   [blocking] file:line — <issue>
   [minor]    file:line — <issue>
+
+Outside this change (never blocking)
+  file:line — <issue>
 ```
 
-FAIL if any criterion is ✗ or ~, tests fail or could not run, or there is a
-blocking quality finding.
+FAIL if any criterion is ✗ or ~, a test fails because of this change, tests
+could not run, or there is an in-scope blocking finding.
 
 ## Hard rules
 
-- Report only. No edits, no commits, no issue comments, no closing issues.
-- Every ✗ and every finding cites file:line.
+- Report only. No edits, no commits, no issue comments, no closing issues.- Every ✗ and every finding cites file:line.
 - Never guess. If the implementation cannot be found, say so.
