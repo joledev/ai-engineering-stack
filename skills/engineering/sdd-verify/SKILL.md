@@ -90,7 +90,31 @@ parallel. Failures that already exist on the base are reported as
 
 Rely on the project's existing tests. Do not build your own harness (scratch
 apps, ad-hoc HTTP clients, containers) unless an in-scope criterion has no test
-at all; then the smallest check that proves it.
+at all; then the smallest check that proves it. The browser check below is
+the one exception.
+
+### Browser check (web projects only)
+
+Run it only when the project is web (Next.js, React, any app served to a
+browser) AND an in-scope criterion describes something visible in the UI
+(rendered content, a form, navigation, an error message on screen). Skip it
+for backend-only or API-only criteria.
+
+1. Check the tool: `command -v ego-browser || ls ~/.local/bin/ego-browser`.
+   Missing → do not install it. Mark those criteria `~ PARTIAL (ego-browser
+   not installed, UI not checked)` and go on.
+2. Read `~/.claude/skills/ego-browser/SKILL.md` before writing any script.
+   Its API is not Playwright; use only what that file lists.
+3. Start the project's dev server (command from `engineering/testing.md`,
+   else `package.json` scripts) in the background, on a free port.
+4. Use one TaskSpace for the whole check. Drive the flow the criterion
+   describes, through the UI the user would use. Record the URL, the steps,
+   and what the snapshot showed.
+5. Stop the dev server when done.
+
+A criterion confirmed in the browser counts as ✓ even with no automated test
+for that layer; cite the steps and snapshot as evidence. If the browser shows
+the criterion failing, it is ✗ regardless of what the tests say.
 
 ## 5. Verify
 

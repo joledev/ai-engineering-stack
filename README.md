@@ -23,6 +23,7 @@ Central AI stack for all engineering projects: global rules, specialized agents,
   `statusLine` only when none is configured.
 - Prints the `claude mcp add` commands for context7 and GitHub. Run them by hand:
   the tokens live in `~/.claude.json` and never in this repo.
+- Checks engram and ego-browser and prints their install commands when missing.
 
 Safe to re-run. Agents update with `git pull`, since they are a symlink.
 
@@ -105,6 +106,7 @@ replaces another.
 | **headroom** | 0.37 | Context optimization layer for LLM applications — a proxy that compresses traffic to the model, plus stored memories and a savings dashboard (`headroom savings`, `headroom dashboard`). |
 | **claude-mem** | — | Persistent memory for the main session, captured by hooks with nothing to call. Prior work is injected as context when a session opens. |
 | **[engram](https://github.com/Gentleman-Programming/engram)** | 3.0 | Memory for subagents. `code-reviewer`, `debugger` and `security-auditor` search it before working and save confirmed findings through MCP (`mem_search`, `mem_save`), since it can't write files and claude-mem is read-only to subagents. |
+| **[ego-browser](https://github.com/citrolabs/ego-lite)** | 2.0 | Browser for agents (ego lite app + skill, macOS). `sdd-verify` uses it in web projects to check acceptance criteria that are visible in the UI; without it those criteria stay `~ PARTIAL`. Install: `npx skills add citrolabs/ego-lite -g -a claude-code`. |
 | **[graphify](https://github.com/Graphify-Labs/graphify)** | 0.8 | Turns a codebase into a queryable knowledge graph — tree-sitter AST parsing across 37 languages, plus docs, SQL and PDFs. Ask `graphify query "..."` instead of grepping; `path A B` traces how two things connect, `affected X` finds what a change breaks. |
 
 `rtk` trims what the tools send; `headroom` trims what reaches the model;
