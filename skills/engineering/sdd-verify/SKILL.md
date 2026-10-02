@@ -40,7 +40,8 @@ For a raw `#N`, check its `type:*` label; a `type:task` walks up to its parent
 Story (`gh api repos/<owner/repo>/issues/<N>/parent --jq '.number'`).
 
 If several Stories match, use the open one (else the most recent) and name the
-one you used in the report.
+one you used in the report. If their acceptance criteria are identical, say so:
+the choice does not change the review.
 
 If no acceptance criteria can be found, or they are not testable (no observable
 outcome), stop and report exactly that. Do not invent criteria.
@@ -59,6 +60,12 @@ clean, review `<BASE>...HEAD`. Read every changed file in full, not only the hun
 **In scope** = the lines that implement this Story/Task. If the diff also carries
 other work, review it only for the "Outside this change" section; it never
 decides the verdict.
+
+Judge an in-scope line by what it does to the product, not only against the AC.
+If it breaks behavior that worked on the base, or leaves the Story's feature
+unreachable from the product's real entry points (API, UI), it is [blocking]
+even when every criterion passes as written. The missing piece may live outside
+the diff; the in-scope line that depends on it is what blocks.
 
 ## 3. Load the project's rules
 
@@ -95,7 +102,8 @@ at all; then the smallest check that proves it.
   finding, not a downgrade.
 - **Spec 2, code quality** (in-scope lines only): duplication, naming,
   architecture boundaries, control flow, error handling, function size, dead
-  code, tests that exercise the real path instead of a mock of it.
+  code, tests that exercise the real path instead of a mock of it, and tests
+  that seed state the product's own entry points cannot produce.
 
 Write the reasoning before each verdict.
 
@@ -123,5 +131,6 @@ could not run, or there is an in-scope blocking finding.
 
 ## Hard rules
 
-- Report only. No edits, no commits, no issue comments, no closing issues.- Every ✗ and every finding cites file:line.
+- Report only. No edits, no commits, no issue comments, no closing issues.
+- Every ✗ and every finding cites file:line.
 - Never guess. If the implementation cannot be found, say so.
