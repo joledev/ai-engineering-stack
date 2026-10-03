@@ -2,7 +2,7 @@
 
 Central AI stack for all engineering projects: global rules, specialized agents, and skills for autonomous, context-aware development in Claude Code.
 
-**Claude Code only.** Support for Windsurf, OpenCode, and other editors was removed — everything here targets Claude Code's own conventions (`.claude/commands/`, `.claude/agents/`, root `CLAUDE.md`).
+**Claude Code only.** Support for Windsurf, OpenCode, and other editors was removed — everything here targets Claude Code's own conventions (`.claude/skills/`, `.claude/agents/`, root `CLAUDE.md`).
 
 ## Global layer (once per machine)
 
@@ -74,8 +74,8 @@ into this stack:
 
 | Committed | Ignored |
 |-----------|---------|
-| `CLAUDE.md` | `.claude/commands` (symlink) |
-| `.claude/business/`, `architecture/`, `domains/`, `engineering/` | `.claude/agents` (symlink) |
+| `CLAUDE.md` | `.claude/skills/<skill>` (one symlink per skill) |
+| `.claude/business/`, `architecture/`, `domains/`, `engineering/` | |
 | `.claude/settings.json` | `.claude/settings.local.json` |
 | | `docs/brain` (symlink to the Obsidian vault) |
 

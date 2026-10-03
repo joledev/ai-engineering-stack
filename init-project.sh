@@ -36,20 +36,50 @@ stack_match() {
     esac
 }
 
-# Symlinks every matching skill into $1, keeping the category/ nesting so
-# slash-command names stay <category>:<skill>.
+# Symlinks every matching skill into $1.
 link_stack_skills() {
-    local dest="$1" cat skill
+    local dest="$1" cat skill name
     LINKED_SKILLS=0
+    STACK_SKILLS=()
     mkdir -p "$dest"
     for cat in "$STACK_DIR/skills"/*/; do
         for skill in "$cat"*/; do
             [ -f "${skill}SKILL.md" ] || continue
             stack_match "${skill}SKILL.md" || continue
-            mkdir -p "$dest/$(basename "$cat")"
-            ln -sfn "${skill%/}" "$dest/$(basename "$cat")/$(basename "$skill")"
+            name="$(basename "$skill")"
+            case " ${STACK_SKILLS[*]} " in
+                *" $dest/$name "*)
+                    echo "WARNING: two skills named '$name', skipping ${skill%/}."
+                    continue ;;
+            esac
+            if [ -e "$dest/$name" ] && [ ! -L "$dest/$name" ]; then
+                echo "WARNING: $dest/$name is not a symlink, skipping."
+                if grep -qxF -- "$dest/$name" .gitignore 2>/dev/null; then
+                    echo "    It is still in .gitignore, remove that line to commit it."
+                fi
+                continue
+            fi
+            ln -sfn "${skill%/}" "$dest/$name"
+            STACK_SKILLS+=("$dest/$name")
             LINKED_SKILLS=$((LINKED_SKILLS + 1))
         done
+    done
+}
+
+drop_stack_links() {
+    local path="$1" link
+    if [ -L "$path" ]; then
+        rm -f "$path"
+        return
+    fi
+    [ -d "$path" ] || return 0
+    find "$path" -type l -print0 | while IFS= read -r -d '' link; do
+        case "$(readlink "$link")" in
+            "$STACK_DIR"/*) ;;
+            *) [ -e "$link" ] && continue ;;
+        esac
+        rm -f "$link"
+        rmdir -p "$(dirname "$link")" 2>/dev/null || true
     done
 }
 
@@ -64,11 +94,14 @@ mkdir -p .claude .agents
 
 # Remove old symlinks, including names used before the Claude-Code-only migration.
 # .claude/agents held per-project agent links; agents now live at user level (install-global.sh).
-rm -rf .claude/commands .claude/agents
-rm -f .claude/skills .claude/personas
-rm -f .agents/skills .agents/personas .agents/commands .agents/agents
+drop_stack_links .claude/commands
+drop_stack_links .claude/agents
+drop_stack_links .claude/skills
+rm -f .claude/personas
+drop_stack_links .agents/skills
+rm -f .agents/personas .agents/commands .agents/agents
 
-link_stack_skills ".claude/commands"
+link_stack_skills ".claude/skills"
 echo "OK: Linked $LINKED_SKILLS skills for stack '$STACK'"
 
 # 2. Setup .claude/ context subdirectories
@@ -119,13 +152,12 @@ echo "OK: Setup docs/brain symlink"
 # tree (.claude/business, architecture, domains, engineering) and the root
 # CLAUDE.md are team-shared instructions and MUST stay in source control.
 GITIGNORE_ENTRIES=(
-    ".claude/commands"
-    ".claude/agents"
     ".claude/settings.local.json"
     ".agents/"
     "docs/brain"
     "graphify-out/"
     "GEMINI.md"
+    "${STACK_SKILLS[@]}"
 )
 
 if [ ! -f ".gitignore" ]; then
@@ -140,7 +172,7 @@ if ! grep -q "$HEADER" ".gitignore"; then
 fi
 
 for entry in "${GITIGNORE_ENTRIES[@]}"; do
-    if ! grep -q "^$entry" ".gitignore"; then
+    if ! grep -qxF -- "$entry" ".gitignore"; then
         echo "$entry" >> ".gitignore"
         echo "OK: Added $entry to .gitignore"
     else
@@ -149,6 +181,12 @@ for entry in "${GITIGNORE_ENTRIES[@]}"; do
 done
 # Clean up potential double newlines
 sed -i '' '/^$/N;/^\n$/D' ".gitignore" 2>/dev/null || true
+
+if grep -qxE '\.claude/(commands|agents)/?' ".gitignore"; then
+    echo "WARNING: .gitignore still has '.claude/commands' or '.claude/agents' from an"
+    echo "    older init. Skills now live in .claude/skills, so remove those lines if"
+    echo "    you keep your own commands or agents there."
+fi
 
 # A project initialized before the context tree was versioned still has a bare
 # ".claude/" line, which keeps ignoring everything under it. Say so — the entries

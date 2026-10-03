@@ -15,8 +15,7 @@ global/statusline-command.sh        statusline, linked by install-global.sh
 global-rules.md                     engineering standards shipped to projects
 ```
 
-`skills/` is symlinked into a target project as `.claude/commands` by the init
-scripts. There are no per-project agents.
+Each skill is symlinked into a target project as `.claude/skills/<skill>` by the init scripts. There are no per-project agents.
 
 `global/agents/` is symlinked as `~/.claude/agents` by `install-global.sh`, which
 also sets `"agent": "software-architect"` in `~/.claude/settings.json`. That
