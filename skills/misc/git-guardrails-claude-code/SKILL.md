@@ -12,9 +12,13 @@ Sets up a PreToolUse hook that intercepts and blocks dangerous git commands befo
 
 - `git push` (all variants including `--force`)
 - `git reset --hard`
-- `git clean -f` / `git clean -fd`
-- `git branch -D`
-- `git checkout .` / `git restore .`
+- `git clean -f` / `git clean -fd` / `git clean -xfd`
+- `git branch -D` / `git branch --delete --force`
+- `git checkout .` / `git checkout -f` / `git restore .`
+- `git switch -f` / `git switch --discard-changes`
+- `git stash drop` / `git stash clear`
+
+Also when written as `git -C dir ...`, `sudo git ...`, `bash -c "git ..."`, inside `$(...)`, with an inline alias (`git -c alias.x=push x`), or chained after `&&`, `;`, `|`, `then` or `do`. When in doubt it blocks: `echo "git push"` gets blocked too. The only text it skips is a plain commit message passed with `-m`. It works without `jq`, and if the input can't be read the command is blocked.
 
 When blocked, Claude sees a message telling it that it does not have authority to access these commands.
 
