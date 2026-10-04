@@ -47,5 +47,5 @@ This file serves as the single source of truth for AI behavior and engineering s
 
 ## 7. Advanced Stack Usage and Memory (Obsidian / Context)
 - **Mandatory Context Rule:** BEFORE proposing any large architectural change, adding heavy dependencies, or structuring new databases, **you must read the local `CONTEXT.md`** file of the project to avoid deviating from the domain model.
-- **Integration with the Brain:** You have access to the user's knowledge base. For complex code patterns or history on why the system is designed a certain way, you must use the `obsidian-vault` skill or read the ADRs in `docs/adr/`.
+- **Integration with the Brain:** You have access to the user's knowledge base. For complex code patterns or history on why the system is designed a certain way, read the notes in `docs/brain/` (a symlink to the Obsidian vault; ADRs live in `docs/brain/ADR/`).
 - **Rely on your Skills:** Do not reinvent the wheel. If the problem requires a quality pass, use `/code-review`. If it requires diagnosing a difficult bug, use `diagnose`. You are part of a smart ecosystem; use it to your advantage.

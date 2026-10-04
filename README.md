@@ -123,20 +123,16 @@ Every edge is tagged `EXTRACTED` when it is explicit in the source or
 fact. It runs offline for code; LLM calls happen only for the semantic pass over
 docs and media. Keep `graphify-out/` out of version control.
 
-> [!IMPORTANT]
-> claude-mem records what happened, not why you decided it. Run `/sum` at the
-> end of each work session so the reasoning lands in Obsidian too.
-
 ## Skills
 
-18 skills across 4 categories. Each category directory has its own README with
+16 skills across 3 categories. Each category directory has its own README with
 one-line descriptions.
 
-### `engineering/` (13)
+### `engineering/` (12)
 Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-architecture**,
 **android-clean-architecture** — plus **sdd-apply**, **prd-to-github-backlog**,
 **project-bootstrap**, **fill-context**, **tdd**, **diagnose**,
-**grill-with-docs**, **improve-codebase-architecture**,
+**improve-codebase-architecture**,
 **prompt-rewrite**, **sdd-verify**.
 
 ### `productivity/` (3)
@@ -169,5 +165,5 @@ dispatches the rest as subagents: one prompt in, one report back.
 | `init-project.sh` | Project setup, `--stack` aware |
 | `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
 | `global-rules.md` | Global engineering standards |
-| `PERSISTENT-MEMORY.md` | claude-mem + engram + Obsidian memory guide |
+| `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide, Obsidian read-only |
 | `OBSIDIAN-INTEGRATION.md` | Obsidian vault symlink bridge |

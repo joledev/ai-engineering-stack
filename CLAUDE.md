@@ -6,7 +6,7 @@ them into a project. There is no application here — it is markdown and bash.
 ## Layout
 
 ```
-skills/<category>/<name>/SKILL.md   18 skills across 4 categories
+skills/<category>/<name>/SKILL.md   16 skills across 3 categories
 global/agents/<name>.md             6-agent team, user-level (all projects)
 init-project.sh                     project setup, --stack aware
 init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
@@ -60,7 +60,7 @@ machine gets the whole team.
 **Claude Code only.** Support for Windsurf and OpenCode was removed; do not
 reintroduce `.windsurf/`, `.opencode/` or their rules files.
 
-**Category READMEs must match the directory.** `skills/misc/`, `personal/` and
+**Category READMEs must match the directory.** `skills/misc/` and
 `productivity/` each have a README listing their skills. Adding or removing a
 skill means updating it in the same commit.
 
@@ -70,4 +70,4 @@ This repo has no `.claude/` context tree — `/fill-context` has never run here,
 and for a repo this small the file you are reading is the whole context.
 
 Project-level docs: `README.md` (installation and inventory),
-`PERSISTENT-MEMORY.md` (claude-mem + Obsidian), `OBSIDIAN-INTEGRATION.md`.
+`PERSISTENT-MEMORY.md` (claude-mem + engram), `OBSIDIAN-INTEGRATION.md`.
