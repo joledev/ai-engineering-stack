@@ -1,8 +1,9 @@
 # Design pipeline (iOS, OpenPencil)
 
 How to run `/ui:design-loop` in your own project with Claude Code and this stack.
-The skill designs or improves iOS screens, has a fresh subagent audit them,
-stops for your approval, applies only what you approved, and audits again.
+The skill designs or improves iOS screens like Claude Design (variants you pick
+from, then iteration), has a read-only subagent audit the result, stops for your
+approval, applies only what you approved, and audits again.
 This guide covers the setup it needs; the loop itself is in
 [skills/ui/design-loop/SKILL.md](./skills/ui/design-loop/SKILL.md).
 
@@ -22,7 +23,7 @@ change a diff the agent can make, review and revert.
 
 | What | Why | How |
 |------|-----|-----|
-| This stack's agents | The audit runs in `code-reviewer` | `install-global.sh` once per machine |
+| This stack's agents | The audit runs in the read-only `design-auditor` | `install-global.sh` once per machine |
 | The skill | `/ui:design-loop` | `init-project.sh <project> --stack=ios` |
 | Node | Runs the build | Tested with Node 24 |
 | `@open-pencil/cli` | Builds, exports PNGs, inspects the file | Installed in the design folder (see below). It is a dependency: agree on it with your team first |
@@ -150,25 +151,33 @@ only the approved rows, so review the PNGs yourself.
 ## 4. Run the loop
 
 ```
+/ui:design-loop Ajustes            improve a section (you don't need to know how)
 /ui:design-loop R7                 design the screen for requirement R7
-/ui:design-loop Ajustes            improve an existing section
-/ui:design-loop audit Ajustes      audit only, no design phase
+/ui:design-loop audit Ajustes      audit only, no redesign
 ```
 
+It works like Claude Design: you ask, it designs, you look at the result.
 What happens, and where you step in:
 
-1. **design**: edits the Source from a Spec requirement, reusing kit and tokens, then builds.
-2. **audit**: exports every screen in scope (light and dark) and hands the PNGs to a
-   fresh `code-reviewer` that checks them against
-   [audit-ios.md](./skills/ui/design-loop/references/audit-ios.md): Nielsen,
+1. **brief**: it exports the screens and diagnoses them itself against
+   [audit-ios.txt](./skills/ui/design-loop/references/audit-ios.txt), plus
+   ui-ux-pro-max lookups. Then it asks you at most 3 **product** questions
+   (who uses the screen, what they do first). "No sé" is a valid answer. It
+   never asks how something should look.
+2. **propose**: it builds 2-3 variants, each attacking a different problem, on a
+   page `Propuestas · <section>` in the `.fig`, light and dark. Open it in
+   OpenPencil. The real screens are untouched.
+3. **pick and iterate**: **you pick** a letter, a mix, or none. The pick replaces
+   the real screen; then you give feedback ("más aire") until you say "listo".
+4. **audit**: the read-only `design-auditor` agent checks the result: Nielsen,
    Apple HIG, WCAG contrast computed from the tokens, hierarchy, errors, control states.
-3. **STOP**: you get a findings table sorted by severity (0-4). **You pick the
-   rows to apply**, and you write the text for every `COPY: user decides` row.
-   The skill never invents product copy and never continues on silence.
-4. **apply**: changes only the approved rows, rebuilds, compares every reachable
+5. **STOP**: a findings table by severity (0-4). **You pick the rows to apply**,
+   and you write the text for every `COPY: user decides` row. The skill never
+   invents product copy and never continues on silence.
+6. **apply**: changes only the approved rows, rebuilds, compares every reachable
    screen against the pre-apply copy, and commits once per round.
-5. **re-audit**: a new subagent checks the applied rows. At most 2 rounds; what is
-   left is listed for you.
+7. **re-audit**: a new `design-auditor` checks the applied rows. At most 2
+   rounds; what is left is listed for you.
 
 ## Rules that save you a bad afternoon
 

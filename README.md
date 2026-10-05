@@ -11,7 +11,8 @@ Central AI stack for all engineering projects: global rules, specialized agents,
 ```
 
 - Symlinks `~/.claude/agents` to `global/agents/`: software-architect,
-  business-analyst, code-reviewer, security-auditor, debugger, test-writer.
+  business-analyst, code-reviewer, security-auditor, debugger, test-writer,
+  design-auditor.
   An existing `~/.claude/agents` directory is moved to `agents.bak-<timestamp>`.
 - Symlinks the skills every session needs into `~/.claude/skills`: fill-context,
   prd-to-github-backlog, prompt-rewrite, sdd-apply, sdd-verify, grill-me, handoff. Stale links
@@ -189,8 +190,8 @@ Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-arch
 `ponytail` is no longer vendored here — it is installed as a Claude Code plugin.
 
 ### `ui/` (1)
-**design-loop** (ios): design → audit → approve → apply → re-audit for screens in a
-code-generated design file. Its audit checklist is built from wondelai/skills,
+**design-loop** (ios): works like Claude Design for screens in a code-generated design
+file: brief → 2-3 variants → pick → iterate → audit → approve → apply → re-audit. Its audit checklist is built from wondelai/skills,
 Apple HIG and WCAG; [ui/README.md](./skills/ui/README.md#sources) lists every
 source, what was taken and what was left out. To set it up in a project
 (OpenPencil, fonts, the `## Design pipeline` section), see
@@ -213,6 +214,7 @@ dispatches the rest as subagents: one prompt in, one report back.
 | **security-auditor** | Read-only. Critical/high issues on auth and untrusted input |
 | **debugger** | Root cause of a failing test or wrong behavior, minimal fix |
 | **test-writer** | Behavioral tests in the project's existing framework |
+| **design-auditor** | Read-only. Audits iOS screens (PNGs + tokens) for design-loop: Nielsen, HIG, computed contrast |
 
 ## Key Files
 

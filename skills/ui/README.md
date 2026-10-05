@@ -2,12 +2,12 @@
 
 Design skills for native apps. Installed with `--stack=ios`.
 
-- **[design-loop](./design-loop/SKILL.md)** — Create or improve screens in a code-generated design file, audit them in a fresh subagent against an iOS checklist, stop for approval, apply only the approved findings, re-audit. Setup guide: [DESIGN-PIPELINE.md](../../DESIGN-PIPELINE.md).
+- **[design-loop](./design-loop/SKILL.md)** — Design or improve screens in a code-generated design file like Claude Design: self-diagnosis, product-only questions, 2-3 built variants to pick from, iteration until "listo", then a read-only audit, approval, apply and re-audit. Setup guide: [DESIGN-PIPELINE.md](../../DESIGN-PIPELINE.md).
 
 ## Sources
 
 `design-loop` borrows rules, not code. Each rule in
-[audit-ios.md](./design-loop/references/audit-ios.md) names the skill it came from.
+[audit-ios.txt](./design-loop/references/audit-ios.txt) names the skill it came from.
 Versions are the ones read on 2026-10-04.
 
 | Source | Version | License | Taken | Left out, and why |
@@ -23,4 +23,4 @@ Versions are the ones read on 2026-10-04.
 | [WCAG 2.1](https://www.w3.org/TR/WCAG21/) (W3C) | 2.1 | W3C | Contrast thresholds 4.5:1 / 3:1 and the luminance formula | — |
 
 ui-ux-pro-max is a prerequisite, installed as a Claude Code plugin. The wondelai
-skills are not installed: their useful rules live in `audit-ios.md`, rewritten for iOS.
+skills are not installed: their useful rules live in `audit-ios.txt`, rewritten for iOS.
