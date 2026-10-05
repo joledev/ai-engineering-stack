@@ -80,10 +80,26 @@ B|GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=alias.p GIT_CONFIG_VALUE_0=push git p
 B|git subtree push --prefix=dist origin gh-pages
 B|git send-pack git@github.com:o/r.git main
 B|git push -h
+B|git -c "alias.x=checkout -f" x
+B|git --attr-source HEAD push
+B|git --shallow-file F clean -fdx
+B|git --shallow-file /dev/null push origin main
+B|git --shallow-file F branch -D foo
+B|git --no-pager --shallow-file F checkout .
+B|git --git-dir /x/.git --work-tree /x stash drop
+B|git -c alias.x=push --no-pager x
+B|git -c alias.x=push --shallow-file F x
+B|git${IFS}push origin main
+B|git$IFS push
+B|git checkout ./src
+B|git checkout .github/workflows/ci.yml
+B|git clean -n -f
 A|git status
 A|git log --oneline -5
 A|git diff
 A|git -C /x status
+A|git --no-pager log --oneline
+A|git --git-dir /x/.git status
 A|git fetch origin
 A|git commit -m "fix: push the button"
 A|git clean -n
@@ -91,7 +107,6 @@ A|git clean -nd
 A|git restore --staged .
 A|git restore src/app.ts
 A|git checkout main
-A|git checkout .github/workflows/ci.yml
 A|git branch -d merged-branch
 A|git stash list
 A|git reset HEAD~1
@@ -106,12 +121,16 @@ run 2 '{"tool_input":{"command":""}}' "empty command"
 run 2 '{"tool_input":{}}' "missing command"
 run 2 '{"tool_input":{"command":"git \\\npush"}}' "line continuation: git \\<newline>push"
 
-# Without jq the hook must block, not allow. PATH keeps only the tools the hook uses.
+# Without jq the hook must block, not allow. PATH holds only cat, which runs before the jq check.
 NOJQ=$(mktemp -d)
-for t in cat tr grep; do ln -s "$(command -v $t)" "$NOJQ/$t"; done
+ln -s "$(command -v cat)" "$NOJQ/cat"
 printf '%s' '{"tool_input":{"command":"git status"}}' | PATH=$NOJQ /bin/bash "$HOOK" 2>/dev/null
 [[ $? == 2 ]] || { echo "FAIL: without jq the hook did not block"; fail=1; }
 rm -rf "$NOJQ"
+
+# A huge command must not change the result (grep -q + SIGPIPE once let this through).
+PAD=$(head -c 200000 /dev/zero | tr '\0' a)
+run 2 "$(jq -cn --arg c "g=git; \$g push --force; echo $PAD" '{tool_input:{command:$c}}')" "200 KB command with a floor-only match"
 
 [[ $fail == 0 ]] && echo "all cases pass"
 exit $fail
