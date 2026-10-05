@@ -2,21 +2,21 @@
 
 # Resolves the absolute path to the directory containing this script
 STACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Parse args: optional target dir, plus --stack=all|web|dotnet|android
+# Parse args: optional target dir, plus --stack=all|web|dotnet|android|ios
 STACK="all"
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
         --stack=*) STACK="${arg#--stack=}" ;;
         -h|--help)
-            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android]"
+            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android|ios]"
             exit 0 ;;
         *) POSITIONAL+=("$arg") ;;
     esac
 done
 case "$STACK" in
-    all|web|dotnet|android) ;;
-    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android"; exit 1 ;;
+    all|web|dotnet|android|ios) ;;
+    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android, ios"; exit 1 ;;
 esac
 
 TARGET_DIR="${POSITIONAL[0]:-$(pwd)}"

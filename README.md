@@ -64,6 +64,9 @@ context tree, the gitignore entries, and the Obsidian bridge in one pass.
 
 # Android / Kotlin project
 ~/dev/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=android
+
+# iOS / SwiftUI project
+~/dev/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=ios
 ```
 
 ### `--stack` — install only what the project needs
@@ -77,7 +80,8 @@ script links only the matching ones. An Android project has no use for
 | `web`     | 13 |
 | `dotnet`  | 14 |
 | `android` | 14 |
-| `all`     | 16 |
+| `ios`     | 13 |
+| `all`     | 17 |
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`.
@@ -136,7 +140,7 @@ into this stack:
 
 ## Tooling
 
-Five tools sit around this stack. They solve different problems and none
+Seven tools sit around this stack. They solve different problems and none
 replaces another.
 
 | Tool | Version | What it does |
@@ -147,6 +151,7 @@ replaces another.
 | **[engram](https://github.com/Gentleman-Programming/engram)** | 3.0 | Memory for subagents. `code-reviewer`, `debugger` and `security-auditor` search it before working and save confirmed findings through MCP (`mem_search`, `mem_save`), since it can't write files and claude-mem is read-only to subagents. |
 | **[ego-browser](https://github.com/citrolabs/ego-lite)** | 2.0 | Browser for agents (ego lite app + skill, macOS). `sdd-verify` uses it in web projects to check acceptance criteria that are visible in the UI; without it those criteria stay `~ PARTIAL`. Install: `npx skills add citrolabs/ego-lite -g -a claude-code`. |
 | **[graphify](https://github.com/Graphify-Labs/graphify)** | 0.8 | Turns a codebase into a queryable knowledge graph — tree-sitter AST parsing across 37 languages, plus docs, SQL and PDFs. Ask `graphify query "..."` instead of grepping; `path A B` traces how two things connect, `affected X` finds what a change breaks. |
+| **[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)** | 2.13 | Local design database (font pairings, palettes, UX rules, SwiftUI guidelines) with a stdlib-only Python search script. `design-loop` calls its `--domain` lookups in the design phase; without it the loop runs and skips them. Install as a plugin, one command at a time: `/plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill`, then `/plugin install ui-ux-pro-max@ui-ux-pro-max-skill`. |
 
 `rtk` trims what the tools send; `headroom` trims what reaches the model;
 `claude-mem` remembers the main session; `engram` remembers what subagents
@@ -164,7 +169,7 @@ docs and media. Keep `graphify-out/` out of version control.
 
 ## Skills
 
-16 skills across 3 categories. Each category directory has its own README with
+17 skills across 4 categories. Each category directory has its own README with
 one-line descriptions.
 
 ### `engineering/` (12)
@@ -178,6 +183,12 @@ Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-arch
 **caveman**, **grill-me**, **handoff**.
 
 `ponytail` is no longer vendored here — it is installed as a Claude Code plugin.
+
+### `ui/` (1)
+**design-loop** (ios): design → audit → approve → apply → re-audit for screens in a
+code-generated design file. Its audit checklist is built from wondelai/skills,
+Apple HIG and WCAG; [ui/README.md](./skills/ui/README.md#sources) lists every
+source, what was taken and what was left out.
 
 ### `misc/` (1)
 See [misc/README.md](./skills/misc/README.md).
