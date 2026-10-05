@@ -71,12 +71,19 @@ if [ -e "$STATUSLINE" ] && [ ! -L "$STATUSLINE" ]; then
     echo "statusline: existing script backed up"
 fi
 ln -sfn "$STACK_DIR/global/statusline-command.sh" "$STATUSLINE"
+if [ "$(jq -r '.statusLine.refreshInterval // empty' "$SETTINGS")" = "3000" ]; then
+    TMP="$(mktemp)"
+    jq '.statusLine.refreshInterval = 3' "$SETTINGS" > "$TMP"
+    cat "$TMP" > "$SETTINGS"
+    rm -f "$TMP"
+    echo "statusline: refreshInterval 3000 -> 3 (it is in seconds)"
+fi
 if [ -n "$(jq -r '.statusLine.command // empty' "$SETTINGS")" ]; then
     echo "statusline: linked; statusLine already configured, left as is"
 else
     TMP="$(mktemp)"
-    jq --arg c "bash $STATUSLINE" \
-        '.statusLine = {type: "command", command: $c, refreshInterval: 3000}' "$SETTINGS" > "$TMP"
+    jq --arg c "bash $(printf '%q' "$STATUSLINE")" \
+        '.statusLine = {type: "command", command: $c, refreshInterval: 3}' "$SETTINGS" > "$TMP"
     cat "$TMP" > "$SETTINGS"
     rm -f "$TMP"
     echo "statusline: linked and set in settings"
@@ -89,7 +96,14 @@ else
     echo "engram: NOT installed, code-reviewer memory tools will be missing (commands below)"
 fi
 
-# 6. MCP servers write to ~/.claude.json (some hold tokens), so they are never scripted here.
+# 6. ego-browser: browser checks in sdd-verify for web projects. Checked, never installed here.
+if command -v ego-browser >/dev/null || [ -x "$HOME/.local/bin/ego-browser" ]; then
+    echo "ego-browser: installed"
+else
+    echo "ego-browser: NOT installed, sdd-verify cannot check UI criteria in a browser (commands below)"
+fi
+
+# 7. MCP servers write to ~/.claude.json (some hold tokens), so they are never scripted here.
 cat <<'EOF'
 
 MCP servers (run by hand, once per machine):
@@ -107,4 +121,8 @@ MCP servers (run by hand, once per machine):
   engram setup claude-code
 
   claude mcp list   # context7, github and engram should show Connected
+
+  # ego-browser: browser for UI checks in sdd-verify (web). macOS only.
+  # The skill installs the ego lite app on first use; finish its onboarding in the app.
+  npx skills add citrolabs/ego-lite -g -a claude-code
 EOF

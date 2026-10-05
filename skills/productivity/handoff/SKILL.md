@@ -2,11 +2,11 @@
 name: handoff
 description: >
   Generate a structured handoff document for the current session — what was done,
-  current state, pending work, blockers, and next steps. Copies the full document
-  to the OS clipboard so it can be pasted into the next chat, and optionally saves
-  a copy to claude-mem. Use when ending a work session or handing off to
-  another session/person.
-version: "1.1.0"
+  current state, pending work, blockers, and next steps — and copy it to the OS
+  clipboard to paste into the next chat. Writes no file (unlike
+  claude-mem:handoff, which writes HANDOFF.md). Use when the user says /handoff
+  or wants to hand the session to another chat or person via clipboard.
+version: "1.3.0"
 modes: [architect]
 stacks: [all]
 argument-hint: "What will the next session be used for?"
@@ -116,6 +116,10 @@ Pipe the finished document to the system clipboard in a single shell invocation:
 | Windows | `clip` |
 
 Use a heredoc or temp file only if the shell needs it; **delete any temp file immediately after copying**. Never leave a handoff file behind in the workspace.
+
+If the copy fails, print the full document as one fenced `markdown` block
+(four-backtick fence, so inner fences don't close it) and tell the user to run
+`/copy` and pick that block. Never lose the document.
 
 ### Report to user
 

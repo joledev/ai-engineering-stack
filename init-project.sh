@@ -2,21 +2,21 @@
 
 # Resolves the absolute path to the directory containing this script
 STACK_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-# Parse args: optional target dir, plus --stack=all|web|dotnet|android
+# Parse args: optional target dir, plus --stack=all|web|dotnet|android|ios
 STACK="all"
 POSITIONAL=()
 for arg in "$@"; do
     case "$arg" in
         --stack=*) STACK="${arg#--stack=}" ;;
         -h|--help)
-            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android]"
+            echo "usage: init-project.sh [target-dir] [--stack=all|web|dotnet|android|ios]"
             exit 0 ;;
         *) POSITIONAL+=("$arg") ;;
     esac
 done
 case "$STACK" in
-    all|web|dotnet|android) ;;
-    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android"; exit 1 ;;
+    all|web|dotnet|android|ios) ;;
+    *) echo "ERROR: Unknown stack '$STACK'. Use: all, web, dotnet, android, ios"; exit 1 ;;
 esac
 
 TARGET_DIR="${POSITIONAL[0]:-$(pwd)}"
@@ -36,20 +36,65 @@ stack_match() {
     esac
 }
 
-# Symlinks every matching skill into $1, keeping the category/ nesting so
-# slash-command names stay <category>:<skill>.
+# Symlinks every matching skill into $1.
 link_stack_skills() {
-    local dest="$1" cat skill
+    local dest="$1" cat skill name
     LINKED_SKILLS=0
+    STACK_SKILLS=()
+    if [ -L "$dest" ]; then
+        echo "WARNING: $dest is your own symlink, not linking stack skills into it."
+        return
+    fi
     mkdir -p "$dest"
     for cat in "$STACK_DIR/skills"/*/; do
         for skill in "$cat"*/; do
             [ -f "${skill}SKILL.md" ] || continue
             stack_match "${skill}SKILL.md" || continue
-            mkdir -p "$dest/$(basename "$cat")"
-            ln -sfn "${skill%/}" "$dest/$(basename "$cat")/$(basename "$skill")"
+            name="$(basename "$skill")"
+            case " ${STACK_SKILLS[*]} " in
+                *" $dest/$name "*)
+                    echo "WARNING: two skills named '$name', skipping ${skill%/}."
+                    continue ;;
+            esac
+            if { [ -e "$dest/$name" ] || [ -L "$dest/$name" ]; } && ! is_stack_link "$dest/$name"; then
+                echo "WARNING: $dest/$name is yours, not a stack link, skipping."
+                if grep -qxF -- "$dest/$name" .gitignore 2>/dev/null; then
+                    echo "    It is still in .gitignore, remove that line to commit it."
+                fi
+                continue
+            fi
+            ln -sfn "${skill%/}" "$dest/$name"
+            STACK_SKILLS+=("$dest/$name")
             LINKED_SKILLS=$((LINKED_SKILLS + 1))
         done
+    done
+}
+
+# A link belongs to the stack when it points into this repo, or when it is
+# broken (left behind after the stack repo moved). Anything else is the user's.
+is_stack_link() {
+    [ -L "$1" ] || return 1
+    case "$(readlink "$1")" in
+        "$STACK_DIR"/*) return 0 ;;
+    esac
+    [ ! -e "$1" ]
+}
+
+drop_stack_links() {
+    local path="$1" link
+    if [ -L "$path" ]; then
+        if is_stack_link "$path"; then
+            rm -f "$path"
+        else
+            echo "WARNING: $path is your own symlink, leaving it."
+        fi
+        return
+    fi
+    [ -d "$path" ] || return 0
+    find "$path" -type l -print0 | while IFS= read -r -d '' link; do
+        is_stack_link "$link" || continue
+        rm -f "$link"
+        rmdir -p "$(dirname "$link")" 2>/dev/null || true
     done
 }
 
@@ -64,11 +109,14 @@ mkdir -p .claude .agents
 
 # Remove old symlinks, including names used before the Claude-Code-only migration.
 # .claude/agents held per-project agent links; agents now live at user level (install-global.sh).
-rm -rf .claude/commands .claude/agents
-rm -f .claude/skills .claude/personas
-rm -f .agents/skills .agents/personas .agents/commands .agents/agents
+drop_stack_links .claude/commands
+drop_stack_links .claude/agents
+drop_stack_links .claude/skills
+rm -f .claude/personas
+drop_stack_links .agents/skills
+rm -f .agents/personas .agents/commands .agents/agents
 
-link_stack_skills ".claude/commands"
+link_stack_skills ".claude/skills"
 echo "OK: Linked $LINKED_SKILLS skills for stack '$STACK'"
 
 # 2. Setup .claude/ context subdirectories
@@ -77,55 +125,16 @@ for context_dir in .claude/business .claude/architecture .claude/domains .claude
 done
 echo "OK: Created .claude/ context subdirectories"
 
-# 3. Setup Obsidian Persistent Memory
-OBSIDIAN_BASE="$HOME/Documents/Obsidian_Brain/Projects"
-mkdir -p "$OBSIDIAN_BASE"
-OBSIDIAN_PROJ="$OBSIDIAN_BASE/$PROJECT_NAME"
-
-mkdir -p "$OBSIDIAN_PROJ/ADR"
-mkdir -p "$OBSIDIAN_PROJ/Bugs"
-
-if [ ! -f "$OBSIDIAN_PROJ/Index.md" ]; then
-    cat > "$OBSIDIAN_PROJ/Index.md" <<EOF
-# $PROJECT_NAME - Index
-
-Welcome to the Obsidian Brain for **$PROJECT_NAME**. This space contains all persistent memory, architectural decisions, and deep context for the project.
-
-## 🏛️ Architecture Decision Records (ADR)
-*(Add links to ADRs here)*
-
-## 📚 Technical Documentation
-*(Add technical docs here)*
-
-## 🐛 Bugs & Learnings
-*(Create new notes here when tricky bugs are resolved)*
-
----
-*Note for AI Agents: Always use \`[[wikilinks]]\` when creating new documents to link them back to this Index.*
-EOF
-    echo "OK: Created Obsidian Index.md"
-else
-    echo "WARNING: Obsidian Index.md already exists, skipping."
-fi
-
-# 4. Setup docs/brain symlink
-mkdir -p docs
-rm -f docs/brain
-ln -s "$OBSIDIAN_PROJ" docs/brain
-echo "OK: Setup docs/brain symlink"
-
 # 5. Gitignore
 # Ignore only what is machine-local or a symlink into the stack. The context
 # tree (.claude/business, architecture, domains, engineering) and the root
 # CLAUDE.md are team-shared instructions and MUST stay in source control.
 GITIGNORE_ENTRIES=(
-    ".claude/commands"
-    ".claude/agents"
     ".claude/settings.local.json"
     ".agents/"
-    "docs/brain"
     "graphify-out/"
     "GEMINI.md"
+    "${STACK_SKILLS[@]}"
 )
 
 if [ ! -f ".gitignore" ]; then
@@ -134,13 +143,13 @@ if [ ! -f ".gitignore" ]; then
 fi
 
 # Add header only if it doesn't exist
-HEADER="# AI Engineering Stack & Obsidian Brain"
+HEADER="# AI Engineering Stack"
 if ! grep -q "$HEADER" ".gitignore"; then
     echo -e "\n$HEADER" >> ".gitignore"
 fi
 
 for entry in "${GITIGNORE_ENTRIES[@]}"; do
-    if ! grep -q "^$entry" ".gitignore"; then
+    if ! grep -qxF -- "$entry" ".gitignore"; then
         echo "$entry" >> ".gitignore"
         echo "OK: Added $entry to .gitignore"
     else
@@ -149,6 +158,12 @@ for entry in "${GITIGNORE_ENTRIES[@]}"; do
 done
 # Clean up potential double newlines
 sed -i '' '/^$/N;/^\n$/D' ".gitignore" 2>/dev/null || true
+
+if grep -qxE '\.claude/(commands|agents)/?' ".gitignore"; then
+    echo "WARNING: .gitignore still has '.claude/commands' or '.claude/agents' from an"
+    echo "    older init. Skills now live in .claude/skills, so remove those lines if"
+    echo "    you keep your own commands or agents there."
+fi
 
 # A project initialized before the context tree was versioned still has a bare
 # ".claude/" line, which keeps ignoring everything under it. Say so — the entries
@@ -160,7 +175,7 @@ if grep -qE '^\.claude/?$' ".gitignore"; then
 fi
 
 # 6. Global & Editor Rules
-RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding. For deep architectural context, check docs/brain/Index.md."
+RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding."
 
 # General Agents Rules
 if [ -d ".agents" ] && [ ! -f ".agents/rules.md" ]; then
@@ -233,6 +248,27 @@ EOF
     echo "OK: Created CLAUDE.md"
 else
     echo "WARNING: CLAUDE.md already exists, skipping (run /fill-context to merge the context index into it)."
+fi
+
+# 10. Commit message hook. It lives only in this stack: the repo gets local,
+# untracked config pointing at it, and no file is copied into the project.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    HOOKS_DIR="$STACK_DIR/global/githooks"
+    HOOKS_PATH="$(git config --local core.hooksPath)"
+    # core.hooksPath replaces .git/hooks entirely, so never switch it over live hooks.
+    LIVE_HOOK="$(find "$(git rev-parse --git-path hooks)" -type f ! -name '*.sample' 2>/dev/null | head -1)"
+    if [ "$HOOKS_PATH" = "$HOOKS_DIR" ]; then
+        echo "OK: core.hooksPath already points to the stack hooks"
+    elif [ -n "$HOOKS_PATH" ]; then
+        echo "WARNING: core.hooksPath is '$HOOKS_PATH' (husky?). Not overriding it; call $HOOKS_DIR/commit-msg from there."
+    elif [ -n "$LIVE_HOOK" ]; then
+        echo "WARNING: .git/hooks has live hooks that core.hooksPath would disable. Not enabling the commit-msg hook."
+    else
+        git config core.hooksPath "$HOOKS_DIR"
+        echo "OK: Enabled commit-msg hook (core.hooksPath -> $HOOKS_DIR)"
+    fi
+else
+    echo "WARNING: Not a git repository, skipping the commit-msg hook. Run git init, then re-run this script."
 fi
 
 echo ""

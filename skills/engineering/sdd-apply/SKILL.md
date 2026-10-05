@@ -260,18 +260,19 @@ to the next task.
 **Goal:** One commit per task, only after Verify passes.
 
 ```bash
-git add -A
-git commit -m "<type>(<scope>): <summary>
-
-<optional body>
-
-Closes #<task#>"
+git add <files from Phase 2 scope>
+git commit -m "<type>(<TASK_ID>): <Imperative summary>"
+# e.g. feat(BE-FOUND-1-T1): Scaffold Go module layout
 ```
 
 Rules:
-- **Conventional Commits format** (`feat`, `fix`, `refactor`, `test`, …) — the repo enforces it via
-  its commit hook. Pick the type that matches the task.
-- Include `Closes #<task#>` so merging the Story PR auto-closes the task.
+- **Conventional Commits format** (`feat`, `fix`, `refactor`, `test`, …) — projects set up by
+  `init-project.sh` reject any other subject through the git `commit-msg` hook that
+  `core.hooksPath` points to in ai-engineering-stack (`global/githooks/`).
+  Pick the type that matches the task.
+- **Subject line only — no body, no trailers.** The scope is the Task ID. The task is closed in
+  Phase 5 with `gh issue close`, and the Story PR body lists `Closes #<task#>`, so the commit needs
+  no `Closes` line.
 - **Do NOT add any Claude/AI co-author trailer** (no `Co-Authored-By: Claude`). Author is the user only.
 - Commit **only** the files this task changed (they should match Phase 2 scope).
 
