@@ -70,4 +70,4 @@ This repo has no `.claude/` context tree — `/fill-context` has never run here,
 and for a repo this small the file you are reading is the whole context.
 
 Project-level docs: `README.md` (installation and inventory),
-`PERSISTENT-MEMORY.md` (claude-mem + engram), `DESIGN-PIPELINE.md` (setting up `/ui:design-loop`).
+`PERSISTENT-MEMORY.md` (claude-mem + engram), `DESIGN-PIPELINE.md` (setting up `/design-loop`).
