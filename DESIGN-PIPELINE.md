@@ -120,6 +120,34 @@ fontManager.setHostFontLoader(async (family, style) => {
 Always run with `--import ./src/fonts.mjs`. Without it text falls back to
 another font and every measurement in the audit is off.
 
+### Your first screen
+
+Start `build.mjs` with one screen to prove the setup works, then grow it into
+`tokens.mjs`, `kit.mjs` and `screens/`:
+
+```js
+// design/src/build.mjs
+export default async (figma) => {
+  const screen = figma.createFrame();
+  screen.name = 'Hello · Light';
+  screen.resize(393, 852);                       // iPhone 15/16, in points
+  screen.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }];
+
+  await figma.loadFontAsync({ family: 'SF Pro Display', style: 'Bold' });
+  const title = figma.createText();
+  title.fontName = { family: 'SF Pro Display', style: 'Bold' };
+  title.fontSize = 34;                           // Large Title
+  title.characters = 'Hola';
+  title.x = 16; title.y = 110;
+  screen.appendChild(title);
+  return { screens: 1 };
+};
+```
+
+Build it, then export it with the Build, Find id and Export commands from
+section 3. Verified with `@open-pencil/cli` 0.15.1 and Node 24: it writes the
+`.fig` and a 1179×2556 PNG (393×852 at 3x) with the title in SF Pro Display Bold.
+
 ## 3. Declare the pipeline in CLAUDE.md
 
 The skill reads a `## Design pipeline` section from the project's `CLAUDE.md`
