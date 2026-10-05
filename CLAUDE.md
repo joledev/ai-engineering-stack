@@ -6,7 +6,7 @@ them into a project. There is no application here — it is markdown and bash.
 ## Layout
 
 ```
-skills/<category>/<name>/SKILL.md   16 skills across 3 categories
+skills/<category>/<name>/SKILL.md   17 skills across 4 categories
 global/agents/<name>.md             6-agent team, user-level (all projects)
 init-project.sh                     project setup, --stack aware
 init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
@@ -27,7 +27,7 @@ architect must live at user level.
 ## Commands
 
 ```bash
-./init-project.sh <dir> --stack=web|dotnet|android|all
+./init-project.sh <dir> --stack=all|web|dotnet|android|ios
 ./init-dotnet-project.sh <dir>
 bash -n init-project.sh              # syntax check
 ```
@@ -41,7 +41,7 @@ and clean up after.
 
 **Every skill declares `stacks:` in its frontmatter.** The init
 scripts read it and link only what matches `--stack`, so a .NET project does
-not receive `audit-layer-boundaries`. Valid values: `all`, `web`, `dotnet`, `android`. `all`
+not receive `audit-layer-boundaries`. Valid values: `all`, `web`, `dotnet`, `android`, `ios`. `all`
 is exclusive — never combine it with another value.
 
 ```yaml
@@ -61,8 +61,8 @@ machine gets the whole team.
 **Claude Code only.** Support for Windsurf and OpenCode was removed; do not
 reintroduce `.windsurf/`, `.opencode/` or their rules files.
 
-**Category READMEs must match the directory.** `skills/misc/` and
-`productivity/` each have a README listing their skills. Adding or removing a
+**Category READMEs must match the directory.** `skills/engineering/`,
+`productivity/`, `ui/` and `misc/` each have a README listing their skills. Adding or removing a
 skill means updating it in the same commit.
 
 ## Context

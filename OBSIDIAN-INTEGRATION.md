@@ -33,12 +33,11 @@ Inside your project's folder in Obsidian, maintain the following standardized st
 - `Bugs/`: Log difficult bugs, the root causes, and how you resolved them.
 - `Index.md`: The central hub file linking to the other notes.
 
-## 5. AI Interaction and the `obsidian-vault` Skill
-Your stack is already equipped with the `obsidian-vault` skill. Because of the symlink, the AI has direct local access, but you can also explicitly trigger the skill.
+## 5. AI Interaction
+Because of the symlink, the AI reads the vault as local files. No skill is needed.
 
 **Example Prompts:**
 - *"Check the ADR notes in `docs/brain/` to understand our database schema before writing the new API."*
-- *"Use the `obsidian-vault` skill to search my notes for how we solved the Stripe webhook issue last month."*
 - *"Document the architecture decision we just made into a new note in `docs/brain/ADR/`."*
 
 ## 6. Git Configuration
