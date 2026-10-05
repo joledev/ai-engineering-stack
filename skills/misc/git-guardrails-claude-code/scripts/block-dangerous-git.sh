@@ -41,6 +41,7 @@ KEPT=$(printf '%s' "$JOINED" | awk '{
 FLAG_F='[[:space:]](-[a-zA-Z]*f[a-zA-Z]*|--f|--fo|--for|--forc|--force)[[:space:]]'
 ALL_FILES='[[:space:]](\.|\./|\.\.|:/|\*)[[:space:]]'
 
+DEPTH=0
 # aliases holds the -c alias.* values of the git call being checked; reset per call.
 check() {
   local rest=$1 sub args a v
@@ -65,6 +66,9 @@ check() {
 
   for a in "${aliases[@]}"; do
     [[ $a == alias.$sub=* ]] || continue
+    # A self-referencing alias would recurse until bash crashes, and a crash
+    # exits non-2, which lets the command run. Git rejects such aliases anyway.
+    (( ++DEPTH > 20 )) && block "a recursive git alias"
     v=${a#*=}
     v=${v//$'\001'/ }
     check " $v $args"

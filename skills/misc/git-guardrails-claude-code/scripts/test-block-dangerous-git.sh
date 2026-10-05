@@ -90,6 +90,9 @@ B|git --git-dir /x/.git --work-tree /x stash drop
 B|git -c alias.x=push --no-pager x
 B|git -c alias.x=push --shallow-file F x
 B|git${IFS}push origin main
+B|git -c alias.x=x x
+B|git -c alias.a=b -c alias.b=a a; git status
+B|git -c "alias.x=-c alias.x=x x" x
 B|git$IFS push
 B|git checkout ./src
 B|git checkout .github/workflows/ci.yml
