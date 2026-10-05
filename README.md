@@ -1,8 +1,99 @@
-# My AI Stack
+# AI Engineering Stack
 
-Central AI stack for all engineering projects: global rules, specialized agents, and skills for autonomous, context-aware development in Claude Code.
+A personal Claude Code harness: a 7-agent team, 17 skills and the scripts that
+wire them into any project. Clone it once, run one script per machine and one
+per project, and every Claude Code session works the same way, with the same
+rules, the same reviewers and the same delivery loop.
 
-**Claude Code only.** Support for Windsurf, OpenCode, and other editors was removed — everything here targets Claude Code's own conventions (`.claude/commands/`, `.claude/agents/`, root `CLAUDE.md`).
+There is no application here. It is markdown and bash.
+
+**Claude Code only.** Support for Windsurf, OpenCode and other editors was
+removed. Everything targets Claude Code's own conventions (`.claude/commands/`,
+`~/.claude/agents/`, root `CLAUDE.md`).
+
+```
+  ~/.claude/  (global layer, once per machine)        your-project/  (per project)
+  ┌──────────────────────────────────────┐            ┌──────────────────────────────────┐
+  │ agents/   -> global/agents/          │            │ .claude/commands -> skills/       │
+  │ skills/   -> 7 everyday skills       │            │   (filtered by --stack)           │
+  │ settings.json  agent: architect      │            │ CLAUDE.md + .claude/ context tree │
+  │ statusline-command.sh                │            │ core.hooksPath -> commit-msg hook │
+  └──────────────────────────────────────┘            └──────────────────────────────────┘
+          install-global.sh                                   init-project.sh
+```
+
+## Contents
+
+- [Quick start](#quick-start)
+- [What's inside](#whats-inside): agents, skills
+- [Global layer](#global-layer-once-per-machine)
+- [Per-project installation](#per-project-installation)
+- [Tooling](#tooling)
+- [Roadmap](#roadmap)
+- [Credits and sources](#credits-and-sources)
+- [Key files](#key-files)
+
+## Quick start
+
+```bash
+git clone <this-repo> ~/dev/personal/ai-engineering-stack
+
+# Once per machine
+~/dev/personal/ai-engineering-stack/install-global.sh
+
+# Once per project
+~/dev/personal/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=web
+```
+
+Then open Claude Code in the project and run `/fill-context`.
+
+## What's inside
+
+### Agents
+
+Installed at user level by `install-global.sh` (`global/agents/`). The main
+session always runs as `software-architect`, which writes the feature code and
+dispatches the rest as subagents: one prompt in, one report back.
+
+| Agent | Role |
+|-------|------|
+| **software-architect** | Main session. Designs, implements, routes work to the others |
+| **business-analyst** | Vague ask to spec plus Given/When/Then acceptance criteria |
+| **code-reviewer** | Read-only. Reviews a diff against the AC and a code-quality spec |
+| **security-auditor** | Read-only. Critical/high issues on auth and untrusted input |
+| **debugger** | Root cause of a failing test or wrong behavior, minimal fix |
+| **test-writer** | Behavioral tests in the project's existing framework |
+| **design-auditor** | Read-only. Audits iOS screens (PNGs + tokens) for design-loop: Nielsen, HIG, computed contrast |
+
+### Skills
+
+17 skills across 4 categories. Each category directory has its own README:
+[engineering](./skills/engineering/README.md),
+[productivity](./skills/productivity/README.md),
+[ui](./skills/ui/README.md), [misc](./skills/misc/README.md).
+The **Origin** column is detailed in [Credits and sources](#credits-and-sources).
+
+| Skill | Stacks | What it does | Origin |
+|-------|--------|--------------|--------|
+| **sdd-apply** | all | Implements a GitHub Story and its Tasks: explore, propose, apply, verify, commit, PR | Own |
+| **sdd-verify** | all | Checks an implementation against its acceptance criteria in a fresh code-reviewer | Own |
+| **prd-to-github-backlog** | all | PRD to GitHub Project: epics, stories, tasks, sprints, estimates | Own |
+| **fill-context** | all | Scans the codebase and interviews you to write the `.claude/` context tree | Own |
+| **prompt-rewrite** | all | Audits a skill, agent or prompt against Anthropic's prompting docs | Adapted |
+| **tdd** | all | Red-green-refactor loop | mattpocock/skills |
+| **diagnose** | all | Reproduce, minimise, hypothesise, instrument, fix, regression-test | mattpocock/skills |
+| **improve-codebase-architecture** | all | Finds deepening opportunities using CONTEXT.md and ADRs | mattpocock/skills |
+| **audit-layer-boundaries** | web | Scans for the three violations that break the layer contract | Own |
+| **dotnet-clean-architecture** | dotnet | Scans a .NET Clean Architecture solution for dependency-rule violations | Own |
+| **android-clean-architecture** | android | Clean Architecture patterns and a layer scan for Android/KMP | Own |
+| **project-bootstrap** | dotnet, android | Skeleton plus one vertical slice end to end | Own |
+| **design-loop** | ios | Claude Design style loop for screens: variants, iterate, audit, apply. Setup: [DESIGN-PIPELINE.md](./DESIGN-PIPELINE.md) | Own, rules adapted |
+| **grill-me** | all | Interviews you about a plan until every branch is resolved | mattpocock/skills |
+| **handoff** | all | Session handoff document, copied to the clipboard | Own |
+| **caveman** | all | Ultra-compressed replies, ~75% fewer tokens | JuliusBrussee/caveman |
+| **git-guardrails-claude-code** | all | Hooks that block destructive git commands. Not used (see Guardrails) | mattpocock/skills |
+
+`ponytail` is no longer vendored here. It is installed as a Claude Code plugin.
 
 ## Global layer (once per machine)
 
@@ -10,9 +101,7 @@ Central AI stack for all engineering projects: global rules, specialized agents,
 ~/dev/personal/ai-engineering-stack/install-global.sh
 ```
 
-- Symlinks `~/.claude/agents` to `global/agents/`: software-architect,
-  business-analyst, code-reviewer, security-auditor, debugger, test-writer,
-  design-auditor.
+- Symlinks `~/.claude/agents` to `global/agents/`.
   An existing `~/.claude/agents` directory is moved to `agents.bak-<timestamp>`.
 - Symlinks the skills every session needs into `~/.claude/skills`: fill-context,
   prd-to-github-backlog, prompt-rewrite, sdd-apply, sdd-verify, grill-me, handoff. Stale links
@@ -51,26 +140,26 @@ Known gaps:
 - `skills/misc/git-guardrails-claude-code` is not used: it blocks every
   `git push`, which `sdd-apply` needs to open PRs.
 
-## Installation (per project)
+## Per-project installation
 
 Use the init script rather than symlinking by hand. It wires the symlinks, the
 context tree, the gitignore entries, and the commit-msg hook in one pass.
 
 ```bash
 # Web / Next.js project
-~/dev/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=web
+~/dev/personal/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=web
 
 # .NET Clean Architecture project
-~/dev/ai-engineering-stack/init-dotnet-project.sh ~/dev/my-api
+~/dev/personal/ai-engineering-stack/init-dotnet-project.sh ~/dev/my-api
 
 # Android / Kotlin project
-~/dev/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=android
+~/dev/personal/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=android
 
 # iOS / SwiftUI project
-~/dev/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=ios
+~/dev/personal/ai-engineering-stack/init-project.sh ~/dev/my-app --stack=ios
 ```
 
-### `--stack` — install only what the project needs
+### `--stack`: install only what the project needs
 
 Every skill declares a `stacks:` field in its frontmatter, and the init
 script links only the matching ones. An Android project has no use for
@@ -172,56 +261,70 @@ Every edge is tagged `EXTRACTED` when it is explicit in the source or
 fact. It runs offline for code; LLM calls happen only for the semantic pass over
 docs and media. Keep `graphify-out/` out of version control.
 
-## Skills
+## Roadmap
 
-17 skills across 4 categories. Each category directory has its own README with
-one-line descriptions.
+Pending, in order:
 
-### `engineering/` (12)
-Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-architecture**,
-**android-clean-architecture** — plus **sdd-apply**, **prd-to-github-backlog**,
-**project-bootstrap**, **fill-context**, **tdd**, **diagnose**,
-**improve-codebase-architecture**,
-**prompt-rewrite**, **sdd-verify**.
+1. **Telemetry.** `tools/telemetry.py` (Python stdlib, no deps) reading
+   `~/.claude/projects/*/*.jsonl`: skills fired (and never fired), agents
+   dispatched, failed tool calls, tokens per project. Complements
+   `claude-mem:agent-cost-report` (cost) and `rtk gain` (token savings). Its
+   output decides which plugins and skills to prune.
+2. **Evals.** A fixture repo with seeded bugs; run `code-reviewer` headless
+   (`claude -p --output-format json`) three times and score bugs found against
+   the bare model. Then `sdd-apply` on a task with pre-written tests. Re-run
+   after every prompt rewrite of an agent.
 
-### `productivity/` (3)
-**caveman**, **grill-me**, **handoff**.
+Small cleanups:
 
-`ponytail` is no longer vendored here — it is installed as a Claude Code plugin.
+- Remove `skills/misc/git-guardrails-claude-code`: it blocks every `git push`,
+  which `sdd-apply` needs, so it is not used (see Guardrails).
+- Decide whether the commit-msg hook accepts a `release:` type. Today it
+  rejects it.
+- Repos that use husky skip the stack hook (init leaves `core.hooksPath`
+  alone). Wire `global/githooks/commit-msg` from `.husky/` where it matters.
 
-### `ui/` (1)
-**design-loop** (ios): works like Claude Design for screens in a code-generated design
-file: brief → 2-3 variants → pick → iterate → audit → approve → apply → re-audit. Its audit checklist is built from wondelai/skills,
-Apple HIG and WCAG; [ui/README.md](./skills/ui/README.md#sources) lists every
-source, what was taken and what was left out. To set it up in a project
-(OpenPencil, fonts, the `## Design pipeline` section), see
-[DESIGN-PIPELINE.md](./DESIGN-PIPELINE.md).
+## Credits and sources
 
-### `misc/` (1)
-See [misc/README.md](./skills/misc/README.md).
+This stack stands on other people's work. Vendored skills keep their upstream
+structure; adapted ones say in their own file what changed and why.
 
-## Agents
+### Skills taken from upstream
 
-Installed at user level by `install-global.sh` (`global/agents/`). The main
-session always runs as `software-architect`, which writes the feature code and
-dispatches the rest as subagents: one prompt in, one report back.
+| Source | License | What we took |
+|--------|---------|--------------|
+| [mattpocock/skills](https://github.com/mattpocock/skills) | MIT | `tdd`, `diagnose` (upstream now `diagnosing-bugs`), `improve-codebase-architecture`, `grill-me`, `git-guardrails-claude-code` |
+| [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) | MIT | `caveman`, copied in May 2026, before upstream moved to Apache-2.0 in 3.0.0. Its license ships in [skills/productivity/caveman/LICENSE](./skills/productivity/caveman/LICENSE). Only change: the `stacks:` field |
 
-| Agent | Role |
-|-------|------|
-| **software-architect** | Main session. Designs, implements, routes work to the others |
-| **business-analyst** | Vague ask to spec plus Given/When/Then acceptance criteria |
-| **code-reviewer** | Read-only. Reviews a diff against the AC and a code-quality spec |
-| **security-auditor** | Read-only. Critical/high issues on auth and untrusted input |
-| **debugger** | Root cause of a failing test or wrong behavior, minimal fix |
-| **test-writer** | Behavioral tests in the project's existing framework |
-| **design-auditor** | Read-only. Audits iOS screens (PNGs + tokens) for design-loop: Nielsen, HIG, computed contrast |
+### Inspiration and adapted rules
 
-## Key Files
+| Source | Used in | What we took |
+|--------|---------|--------------|
+| [mattpocock/skills](https://github.com/mattpocock/skills) | The own skills | The skill format: one focused job, a trigger-first `description`, short imperative steps |
+| [NeoLabHQ/context-engineering-kit](https://github.com/NeoLabHQ/context-engineering-kit/tree/master/agents) | `global/agents/` | Role split and reviewer discipline (architect, business-analyst, code-reviewer, security-auditor). Left out its threat prompting and its developer/tech-lead split. Details in `software-architect.md` |
+| [rubentanahara/claude-code-config-devtalk](https://github.com/rubentanahara/claude-code-config-devtalk) | `prompt-rewrite` | Skill structure, minus two rules that conflict with Anthropic's docs |
+| [Anthropic prompting best practices](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/claude-prompting-best-practices) | `prompt-rewrite`, all agents | The rules every prompt is checked against |
+| [wondelai/skills](https://github.com/wondelai/skills), [ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill), Apple HIG, [WCAG 2.1](https://www.w3.org/TR/WCAG21/) | `design-loop`, `design-auditor` | Audit rules rewritten for iOS. Full table, with what was left out and why: [skills/ui/README.md](./skills/ui/README.md#sources) |
+| John Ousterhout, *A Philosophy of Software Design* | `improve-codebase-architecture` | "Design It Twice" for exploring alternative interfaces |
+
+### Tools
+
+[rtk](https://github.com/rtk-ai/rtk), headroom, claude-mem,
+[engram](https://github.com/Gentleman-Programming/engram),
+[ego-browser](https://github.com/citrolabs/ego-lite),
+[graphify](https://github.com/Graphify-Labs/graphify),
+[ui-ux-pro-max](https://github.com/nextlevelbuilder/ui-ux-pro-max-skill)
+and the `ponytail` plugin. See [Tooling](#tooling).
+
+## Key files
 
 | File | Purpose |
 |------|---------|
+| `install-global.sh` | User-level setup, once per machine |
 | `init-project.sh` | Project setup, `--stack` aware |
 | `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
+| `global/agents/` | The 7-agent team |
+| `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global-rules.md` | Global engineering standards |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
 | `DESIGN-PIPELINE.md` | Setting up `/ui:design-loop` in a project: OpenPencil, fonts, pipeline keys |
