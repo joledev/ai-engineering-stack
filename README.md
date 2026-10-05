@@ -88,19 +88,25 @@ to `dotnet`.
 
 ### Commit message hook
 
-Init copies `templates/githooks/commit-msg` to `<project>/.githooks/commit-msg`
-and runs `git config core.hooksPath .githooks`. The hook rejects a subject that
-is neither conventional (`fix(scope): ...`) nor ticket-first (`OG-4703: ...`).
-It is POSIX `sh` plus `grep -E`, so it runs wherever git does, Git for Windows included.
+The hook lives only here, in `global/githooks/commit-msg`. Init points the
+project at it with local git config, so nothing is copied or committed into
+the work repo:
 
-- **Commit `.githooks/`.** The hook travels with the repo. Each new clone
-  enables it once with `git config core.hooksPath .githooks`.
+```bash
+git config core.hooksPath ~/dev/personal/ai-engineering-stack/global/githooks
+```
+
+The hook rejects a subject that is neither conventional (`fix(scope): ...`) nor
+ticket-first (`OG-4703: ...`). It is POSIX `sh` plus `grep -E`.
+
+- It enforces your own commits on this machine, not the team's. Teammates
+  and CI never see it.
+- For a repo not set up by init (client or team repo), run the `git config`
+  line above in it. `git pull` here updates the hook for every repo at once.
 - Init does not change `core.hooksPath` when the repo already sets one (husky)
-  or has live scripts in `.git/hooks/`, since the switch would disable them. It
-  prints what to do instead.
+  or has live scripts in `.git/hooks/`, since the switch would disable them.
 - Not a git repo yet: init skips the hook. Run `git init`, then init again.
-- A local hook can be skipped with `--no-verify`. To enforce the format for the
-  whole team, check commit messages in CI.
+- Undo in a repo: `git config --unset core.hooksPath`.
 
 ### After init
 

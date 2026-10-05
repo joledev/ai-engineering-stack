@@ -267,7 +267,8 @@ git commit -m "<type>(<TASK_ID>): <Imperative summary>"
 
 Rules:
 - **Conventional Commits format** (`feat`, `fix`, `refactor`, `test`, …) — projects set up by
-  `init-project.sh` reject any other subject through the git `commit-msg` hook in `.githooks/`.
+  `init-project.sh` reject any other subject through the git `commit-msg` hook that
+  `core.hooksPath` points to in ai-engineering-stack (`global/githooks/`).
   Pick the type that matches the task.
 - **Subject line only — no body, no trailers.** The scope is the Task ID. The task is closed in
   Phase 5 with `gh issue close`, and the Story PR body lists `Closes #<task#>`, so the commit needs

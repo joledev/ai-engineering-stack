@@ -3,8 +3,9 @@
 # ticket-first (`OG-4703: ...`). POSIX sh + grep -E only, so it runs anywhere git
 # does, Git for Windows included.
 #
-# Versioned in .githooks/. Each clone enables it once:
-#   git config core.hooksPath .githooks
+# Lives only in ai-engineering-stack; nothing is copied into work repos. Each
+# repo points here with local, untracked config (init-project.sh does it):
+#   git config core.hooksPath ~/dev/personal/ai-engineering-stack/global/githooks
 
 subject=$(grep -v '^#' "$1" | sed -n '/[^[:space:]]/{p;q;}')
 

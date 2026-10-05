@@ -239,30 +239,22 @@ else
     echo "WARNING: CLAUDE.md already exists, skipping."
 fi
 
-# 10. Commit message hook, versioned in .githooks/ so it travels with the repo.
-# Each clone enables it once with `git config core.hooksPath .githooks`.
+# 10. Commit message hook. It lives only in this stack: the repo gets local,
+# untracked config pointing at it, and no file is copied into the project.
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-    mkdir -p .githooks
-    if [ ! -f .githooks/commit-msg ]; then
-        cp "$STACK_DIR/templates/githooks/commit-msg" .githooks/commit-msg
-        chmod +x .githooks/commit-msg
-        echo "OK: Created .githooks/commit-msg"
-    else
-        echo "WARNING: .githooks/commit-msg already exists, skipping."
-    fi
+    HOOKS_DIR="$STACK_DIR/global/githooks"
     HOOKS_PATH="$(git config --local core.hooksPath)"
     # core.hooksPath replaces .git/hooks entirely, so never switch it over live hooks.
     LIVE_HOOK="$(find "$(git rev-parse --git-path hooks)" -type f ! -name '*.sample' 2>/dev/null | head -1)"
-    if [ "$HOOKS_PATH" = ".githooks" ]; then
-        echo "OK: core.hooksPath already points to .githooks"
+    if [ "$HOOKS_PATH" = "$HOOKS_DIR" ]; then
+        echo "OK: core.hooksPath already points to the stack hooks"
     elif [ -n "$HOOKS_PATH" ]; then
-        echo "WARNING: core.hooksPath is '$HOOKS_PATH' (husky?). Not overriding it; call .githooks/commit-msg from there."
+        echo "WARNING: core.hooksPath is '$HOOKS_PATH' (husky?). Not overriding it; call $HOOKS_DIR/commit-msg from there."
     elif [ -n "$LIVE_HOOK" ]; then
-        echo "WARNING: .git/hooks has live hooks that core.hooksPath would disable. Move them to .githooks/, then run:"
-        echo "    git config core.hooksPath .githooks"
+        echo "WARNING: .git/hooks has live hooks that core.hooksPath would disable. Not enabling the commit-msg hook."
     else
-        git config core.hooksPath .githooks
-        echo "OK: Enabled .githooks (core.hooksPath)"
+        git config core.hooksPath "$HOOKS_DIR"
+        echo "OK: Enabled commit-msg hook (core.hooksPath -> $HOOKS_DIR)"
     fi
 else
     echo "WARNING: Not a git repository, skipping the commit-msg hook. Run git init, then re-run this script."
