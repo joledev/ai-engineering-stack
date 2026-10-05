@@ -53,7 +53,7 @@ Known gaps:
 ## Installation (per project)
 
 Use the init script rather than symlinking by hand. It wires the symlinks, the
-context tree, the gitignore entries, and the Obsidian bridge in one pass.
+context tree, the gitignore entries, and the commit-msg hook in one pass.
 
 ```bash
 # Web / Next.js project
@@ -127,7 +127,6 @@ into this stack:
 | `CLAUDE.md` | `.claude/commands` (symlink) |
 | `.claude/business/`, `architecture/`, `domains/`, `engineering/` | `.claude/agents` (symlink) |
 | `.claude/settings.json` | `.claude/settings.local.json` |
-| | `docs/brain` (symlink to the Obsidian vault) |
 
 > [!IMPORTANT]
 > Projects initialized before this change have a bare `.claude/` line in their
@@ -163,8 +162,7 @@ replaces another.
 `claude-mem` remembers the main session; `engram` remembers what subagents
 found; `graphify` answers questions the code can already answer, so the context
 tree does not have to. The two memories are split on purpose and don't see each
-other. See `PERSISTENT-MEMORY.md` for the split, engram setup, and how both pair
-with Obsidian.
+other. See `PERSISTENT-MEMORY.md` for the split and the engram setup.
 
 Graphify writes to `graphify-out/` (`graph.json`, `graph.html`, and a
 `GRAPH_REPORT.md` naming the god nodes — the entities everything else touches).
@@ -223,6 +221,5 @@ dispatches the rest as subagents: one prompt in, one report back.
 | `init-project.sh` | Project setup, `--stack` aware |
 | `init-dotnet-project.sh` | Same, for .NET Clean Architecture (defaults to `dotnet`) |
 | `global-rules.md` | Global engineering standards |
-| `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide, Obsidian read-only |
-| `OBSIDIAN-INTEGRATION.md` | Obsidian vault symlink bridge |
+| `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
 | `DESIGN-PIPELINE.md` | Setting up `/ui:design-loop` in a project: OpenPencil, fonts, pipeline keys |

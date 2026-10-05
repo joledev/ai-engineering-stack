@@ -83,43 +83,6 @@ for context_dir in .claude/business .claude/architecture .claude/domains .claude
 done
 echo "OK: Created .claude/ context subdirectories"
 
-# 3. Setup Obsidian Persistent Memory
-OBSIDIAN_BASE="$HOME/Documents/Obsidian_Brain/Projects"
-mkdir -p "$OBSIDIAN_BASE"
-OBSIDIAN_PROJ="$OBSIDIAN_BASE/$PROJECT_NAME"
-
-mkdir -p "$OBSIDIAN_PROJ/ADR"
-mkdir -p "$OBSIDIAN_PROJ/Bugs"
-
-if [ ! -f "$OBSIDIAN_PROJ/Index.md" ]; then
-    cat > "$OBSIDIAN_PROJ/Index.md" <<EOF
-# $PROJECT_NAME - Index
-
-Welcome to the Obsidian Brain for **$PROJECT_NAME**. This space contains all persistent memory, architectural decisions, and deep context for the project.
-
-## 🏛️ Architecture Decision Records (ADR)
-*(Add links to ADRs here)*
-
-## 📚 Technical Documentation
-*(Add technical docs here)*
-
-## 🐛 Bugs & Learnings
-*(Create new notes here when tricky bugs are resolved)*
-
----
-*Note for AI Agents: Always use \`[[wikilinks]]\` when creating new documents to link them back to this Index.*
-EOF
-    echo "OK: Created Obsidian Index.md"
-else
-    echo "WARNING: Obsidian Index.md already exists, skipping."
-fi
-
-# 4. Setup docs/brain symlink
-mkdir -p docs
-rm -f docs/brain
-ln -s "$OBSIDIAN_PROJ" docs/brain
-echo "OK: Setup docs/brain symlink"
-
 # 5. Gitignore
 # Ignore only what is machine-local or a symlink into the stack. The context
 # tree (.claude/business, architecture, domains, engineering) and the root
@@ -130,7 +93,6 @@ GITIGNORE_ENTRIES=(
     ".claude/recipes"
     ".claude/settings.local.json"
     ".agents/"
-    "docs/brain"
     "graphify-out/"
     "GEMINI.md"
 )
@@ -141,7 +103,7 @@ if [ ! -f ".gitignore" ]; then
 fi
 
 # Add header only if it doesn't exist
-HEADER="# AI Engineering Stack & Obsidian Brain"
+HEADER="# AI Engineering Stack"
 if ! grep -q "$HEADER" ".gitignore"; then
     echo -e "\n$HEADER" >> ".gitignore"
 fi
@@ -167,7 +129,7 @@ if grep -qE '^\.claude/?$' ".gitignore"; then
 fi
 
 # 6. Global & Editor Rules
-RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding. For deep architectural context, check docs/brain/Index.md. Note: This project uses .NET Clean Architecture skills and recipes."
+RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding. Note: This project uses .NET Clean Architecture skills and recipes."
 
 # General Agents Rules
 if [ -d ".agents" ] && [ ! -f ".agents/rules.md" ]; then
@@ -207,7 +169,7 @@ if [ ! -f "CLAUDE.md" ]; then
 
 > Read the linked files for domain, architecture, and business context before proposing changes or adding new entities.
 > **Context not yet generated.** Run \`/fill-context\` in Claude Code to populate the sections below.
-> **.NET Clean Architecture**: Refer to \`.claude/recipes\` for backend workflows. For deeper architectural context, read the notes in \`docs/brain\` using the \`obsidian-vault\` skill.
+> **.NET Clean Architecture**: Refer to \`.claude/recipes\` for backend workflows.
 
 ## Business
 - [Overview](.claude/business/overview.md) — Purpose, users, success metrics

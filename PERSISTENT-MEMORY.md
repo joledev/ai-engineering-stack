@@ -1,6 +1,6 @@
 # Persistent Memory Guide
 
-This stack uses two memory layers. **claude-mem** captures what happens in the main session on its own. **engram** holds what subagents confirm and save. The Obsidian vault is read-only context: the agent reads existing notes through `docs/brain`, but nothing in the stack writes to it.
+This stack uses two memory layers. **claude-mem** captures what happens in the main session on its own. **engram** holds what subagents confirm and save.
 
 ---
 
@@ -10,7 +10,6 @@ This stack uses two memory layers. **claude-mem** captures what happens in the m
 |-------|--------|---------|---------|
 | **Automatic** | claude-mem | Main session: *"what we did last time"*, decisions, patterns | Hooks, with no action from you |
 | **Subagent** | engram | Findings a subagent confirmed that outlive the diff (bugs in shared code, broken conventions) | The agent calls `mem_save` |
-| **Read-only** | Obsidian (`docs/brain`) | Existing ADRs, bug logs, domain notes | You write them by hand; the agent only reads |
 
 **The flow**: claude-mem records the main session on its own in the background. Subagents search engram before they work and save to it after.
 
@@ -49,11 +48,6 @@ engram.
   running, and it's cheap to reverse.
 - Against: two memories, each knowing half. What the reviewer finds lives in
   engram, and the main session doesn't see it unless it searches there.
-
-### Obsidian (read-only)
-The init scripts create `~/Documents/Obsidian_Brain/Projects/<project>/` and
-symlink it as `docs/brain`. `global-rules.md` tells the agent to read it for
-history and ADRs. No skill writes to it.
 
 ---
 
@@ -96,36 +90,6 @@ echo '.engram/' >> <root>/<repo>/.git/info/exclude                       # local
 A repo added later needs both lines. Check the result with
 `curl -s "http://127.0.0.1:7437/project/current?cwd=<dir>"`.
 
-### 3. Obsidian vault
-
-**Create the vault structure:**
-```bash
-# Your master vault location
-~/Documents/Obsidian_Brain/
-
-# Per-project structure
-~/Documents/Obsidian_Brain/Projects/[Project-Name]/
-├── ADR/           # Architecture Decision Records
-├── Bugs/          # Bug logs with root causes
-├── Docs/          # Technical documentation
-├── Learnings/     # Insights and discoveries
-├── Features/      # Feature implementations
-├── Config/        # Environment and tool configurations
-└── Index.md       # Hub file with links to all notes
-```
-
-**Link to each project:**
-```bash
-cd /your/project
-mkdir -p docs
-ln -s ~/Documents/Obsidian_Brain/Projects/your-project ./docs/brain
-```
-
-**Add to `.gitignore`:**
-```
-docs/brain/
-```
-
 ---
 
 ## Searching Memory
@@ -140,21 +104,10 @@ It does not see engram. For what subagents found, search engram directly:
 or browse it with `engram tui`. Same-file findings get flagged as conflicts.
 Resolve them there, since the reviewer has no `mem_judge`.
 
-### Obsidian
-Search directly:
-```bash
-# Search within current project
-grep -rl "keyword" "$PROJECT_PATH" --include="*.md"
-
-# Search across all projects
-grep -rl "keyword" "$HOME/Documents/Obsidian_Brain/" --include="*.md"
-```
-
 ---
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `OBSIDIAN-INTEGRATION.md` | Legacy Obsidian setup guide |
 | `global-rules.md` | Global rules including memory protocol |
