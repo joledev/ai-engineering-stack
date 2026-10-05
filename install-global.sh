@@ -96,7 +96,14 @@ else
     echo "engram: NOT installed, code-reviewer memory tools will be missing (commands below)"
 fi
 
-# 6. MCP servers write to ~/.claude.json (some hold tokens), so they are never scripted here.
+# 6. ego-browser: browser checks in sdd-verify for web projects. Checked, never installed here.
+if command -v ego-browser >/dev/null || [ -x "$HOME/.local/bin/ego-browser" ]; then
+    echo "ego-browser: installed"
+else
+    echo "ego-browser: NOT installed, sdd-verify cannot check UI criteria in a browser (commands below)"
+fi
+
+# 7. MCP servers write to ~/.claude.json (some hold tokens), so they are never scripted here.
 cat <<'EOF'
 
 MCP servers (run by hand, once per machine):
@@ -114,4 +121,8 @@ MCP servers (run by hand, once per machine):
   engram setup claude-code
 
   claude mcp list   # context7, github and engram should show Connected
+
+  # ego-browser: browser for UI checks in sdd-verify (web). macOS only.
+  # The skill installs the ego lite app on first use; finish its onboarding in the app.
+  npx skills add citrolabs/ego-lite -g -a claude-code
 EOF

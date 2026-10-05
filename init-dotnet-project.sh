@@ -121,43 +121,6 @@ for context_dir in .claude/business .claude/architecture .claude/domains .claude
 done
 echo "OK: Created .claude/ context subdirectories"
 
-# 3. Setup Obsidian Persistent Memory
-OBSIDIAN_BASE="$HOME/Documents/Obsidian_Brain/Projects"
-mkdir -p "$OBSIDIAN_BASE"
-OBSIDIAN_PROJ="$OBSIDIAN_BASE/$PROJECT_NAME"
-
-mkdir -p "$OBSIDIAN_PROJ/ADR"
-mkdir -p "$OBSIDIAN_PROJ/Bugs"
-
-if [ ! -f "$OBSIDIAN_PROJ/Index.md" ]; then
-    cat > "$OBSIDIAN_PROJ/Index.md" <<EOF
-# $PROJECT_NAME - Index
-
-Welcome to the Obsidian Brain for **$PROJECT_NAME**. This space contains all persistent memory, architectural decisions, and deep context for the project.
-
-## 🏛️ Architecture Decision Records (ADR)
-*(Add links to ADRs here)*
-
-## 📚 Technical Documentation
-*(Add technical docs here)*
-
-## 🐛 Bugs & Learnings
-*(Create new notes here when tricky bugs are resolved)*
-
----
-*Note for AI Agents: Always use \`[[wikilinks]]\` when creating new documents to link them back to this Index.*
-EOF
-    echo "OK: Created Obsidian Index.md"
-else
-    echo "WARNING: Obsidian Index.md already exists, skipping."
-fi
-
-# 4. Setup docs/brain symlink
-mkdir -p docs
-rm -f docs/brain
-ln -s "$OBSIDIAN_PROJ" docs/brain
-echo "OK: Setup docs/brain symlink"
-
 # 5. Gitignore
 # Ignore only what is machine-local or a symlink into the stack. The context
 # tree (.claude/business, architecture, domains, engineering) and the root
@@ -167,7 +130,6 @@ GITIGNORE_ENTRIES=(
     ".claude/recipes"
     ".claude/settings.local.json"
     ".agents/"
-    "docs/brain"
     "graphify-out/"
     "GEMINI.md"
     "${STACK_SKILLS[@]}"
@@ -179,7 +141,7 @@ if [ ! -f ".gitignore" ]; then
 fi
 
 # Add header only if it doesn't exist
-HEADER="# AI Engineering Stack & Obsidian Brain"
+HEADER="# AI Engineering Stack"
 if ! grep -q "$HEADER" ".gitignore"; then
     echo -e "\n$HEADER" >> ".gitignore"
 fi
@@ -211,7 +173,7 @@ if grep -qE '^\.claude/?$' ".gitignore"; then
 fi
 
 # 6. Global & Editor Rules
-RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding. For deep architectural context, check docs/brain/Index.md. Note: This project uses .NET Clean Architecture skills and recipes."
+RULE_CONTENT="Always adhere to the global engineering standards defined in the symlinked AI stack, and read the root CLAUDE.md before proceeding. Note: This project uses .NET Clean Architecture skills and recipes."
 
 # General Agents Rules
 if [ -d ".agents" ] && [ ! -f ".agents/rules.md" ]; then
@@ -251,7 +213,7 @@ if [ ! -f "CLAUDE.md" ]; then
 
 > Read the linked files for domain, architecture, and business context before proposing changes or adding new entities.
 > **Context not yet generated.** Run \`/fill-context\` in Claude Code to populate the sections below.
-> **.NET Clean Architecture**: Refer to \`.claude/recipes\` for backend workflows. For deeper architectural context, read the notes in \`docs/brain\` using the \`obsidian-vault\` skill.
+> **.NET Clean Architecture**: Refer to \`.claude/recipes\` for backend workflows.
 
 ## Business
 - [Overview](.claude/business/overview.md) — Purpose, users, success metrics
@@ -281,6 +243,27 @@ EOF
     echo "OK: Created CLAUDE.md"
 else
     echo "WARNING: CLAUDE.md already exists, skipping."
+fi
+
+# 10. Commit message hook. It lives only in this stack: the repo gets local,
+# untracked config pointing at it, and no file is copied into the project.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    HOOKS_DIR="$STACK_DIR/global/githooks"
+    HOOKS_PATH="$(git config --local core.hooksPath)"
+    # core.hooksPath replaces .git/hooks entirely, so never switch it over live hooks.
+    LIVE_HOOK="$(find "$(git rev-parse --git-path hooks)" -type f ! -name '*.sample' 2>/dev/null | head -1)"
+    if [ "$HOOKS_PATH" = "$HOOKS_DIR" ]; then
+        echo "OK: core.hooksPath already points to the stack hooks"
+    elif [ -n "$HOOKS_PATH" ]; then
+        echo "WARNING: core.hooksPath is '$HOOKS_PATH' (husky?). Not overriding it; call $HOOKS_DIR/commit-msg from there."
+    elif [ -n "$LIVE_HOOK" ]; then
+        echo "WARNING: .git/hooks has live hooks that core.hooksPath would disable. Not enabling the commit-msg hook."
+    else
+        git config core.hooksPath "$HOOKS_DIR"
+        echo "OK: Enabled commit-msg hook (core.hooksPath -> $HOOKS_DIR)"
+    fi
+else
+    echo "WARNING: Not a git repository, skipping the commit-msg hook. Run git init, then re-run this script."
 fi
 
 echo ""
