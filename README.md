@@ -27,6 +27,30 @@ Central AI stack for all engineering projects: global rules, specialized agents,
 
 Safe to re-run. Agents update with `git pull`, since they are a symlink.
 
+### Guardrails (user level, not installed by this repo)
+
+These live in `~/.claude/` and are set by hand. `install-global.sh` does not touch them.
+
+- **No Bash sandbox.** Removed: it broke `pbcopy` (`/handoff`) and other projects.
+  Permission rules are the only barrier left.
+- **Deny rules** in `~/.claude/settings.json`: `Read`/`Edit` of `.env*` anywhere
+  (`//**/.env*`) and of `~/.ssh/**`; `git push --force`/`-f`, including the
+  `git -C <dir>` form; `rm -rf /*` and `rm -rf ~*`.
+- **Ask rules** for commands that destroy uncommitted work: `git reset --hard`,
+  `clean -f`, `branch -D`, `checkout .`, `restore .`, each with its `git -C` form.
+- **Commit hook** `~/.claude/hooks/validate-commit.py` (PreToolUse on Bash): blocks
+  a `git commit` whose subject is neither conventional (`fix(scope): ...`) nor
+  ticket-first (`OG-4703: ...`). Errors go to stderr so the agent sees why.
+
+Known gaps:
+
+- `Read`/`Edit` rules cover only those tools. `cat .env` from Bash is not
+  blocked; the risk is accepted.
+- Bash rules match the start of the command text. Every rule needs a `git -C`
+  variant, because the agent is told to use `git -C` instead of `cd`.
+- `skills/misc/git-guardrails-claude-code` is not used: it blocks every
+  `git push`, which `sdd-apply` needs to open PRs.
+
 ## Installation (per project)
 
 Use the init script rather than symlinking by hand. It wires the symlinks, the
@@ -51,10 +75,10 @@ script links only the matching ones. An Android project has no use for
 
 | `--stack` | skills |
 |-----------|--------|
-| `web`     | 15 |
-| `dotnet`  | 16 |
-| `android` | 16 |
-| `all`     | 18 |
+| `web`     | 13 |
+| `dotnet`  | 14 |
+| `android` | 14 |
+| `all`     | 16 |
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`.
@@ -140,8 +164,8 @@ Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-arch
 
 `ponytail` is no longer vendored here — it is installed as a Claude Code plugin.
 
-### `misc/` (1), `personal/` (1)
-See [misc/README.md](./skills/misc/README.md) and [personal/README.md](./skills/personal/README.md).
+### `misc/` (1)
+See [misc/README.md](./skills/misc/README.md).
 
 ## Agents
 
