@@ -18,7 +18,11 @@ Sets up a PreToolUse hook that intercepts and blocks dangerous git commands befo
 - `git switch -f` / `git switch --discard-changes`
 - `git stash drop` / `git stash clear`
 
-Also when written as `git -C dir ...`, `sudo git ...`, `bash -c "git ..."`, inside `$(...)`, with an inline alias (`git -c alias.x=push x`), or chained after `&&`, `;`, `|`, `then` or `do`. When in doubt it blocks: `echo "git push"` gets blocked too. The only text it skips is a plain commit message passed with `-m`. It works without `jq`, and if the input can't be read the command is blocked.
+Also when written as `git -C dir ...`, `sudo git ...`, `\git`, `"git"`, `bash -c "git ..."`, inside `$(...)`, with an inline alias (`git -c alias.x=push x`), or chained after `&&`, `;`, `|`, `>`, `then` or `do`. When in doubt it blocks: `echo "git push"` and `git push -h` get blocked too.
+
+It needs `jq` (macOS 15+ ships it at `/usr/bin/jq`). If `jq` is missing or the input can't be read, every Bash call is blocked. It has only been tested on macOS; Linux and Windows are tracked in issue #3.
+
+Known gaps: commands built at runtime (`g=git; $g push`) and aliases defined in `~/.gitconfig` are not resolved. It is a guardrail against mistakes, not a sandbox.
 
 When blocked, Claude sees a message telling it that it does not have authority to access these commands.
 
@@ -98,3 +102,5 @@ echo '{"tool_input":{"command":"git push origin main"}}' | <path-to-script>
 ```
 
 Should exit with code 2 and print a BLOCKED message to stderr.
+
+After editing the script, run the full table: `bash scripts/test-block-dangerous-git.sh` (from this skill's directory).

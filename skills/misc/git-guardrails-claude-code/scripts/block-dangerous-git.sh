@@ -1,81 +1,105 @@
 #!/bin/bash
+# PreToolUse hook. Exit 2 blocks the Bash call; every path that can't read the
+# command must exit 2 too, or the hook fails open.
+set -o pipefail
 
 INPUT=$(cat)
 
 unreadable() {
-  echo "BLOCKED: couldn't read the command from the hook input." >&2
+  echo "BLOCKED: git-guardrails couldn't read the command from the hook input. $1" >&2
   exit 2
 }
 
-if command -v jq >/dev/null; then
-  COMMAND=$(printf '%s' "$INPUT" | jq -er '.tool_input.command | if type == "string" then . else error end' 2>/dev/null) || unreadable
-else
-  KEYS=$(printf '%s' "$INPUT" | sed -zE 's/"command" *: *"/\x02/g; s/[^\x02]//g')
-  [[ $KEYS == $'\x02' ]] || unreadable
-  COMMAND=$(printf '%s' "$INPUT" | sed -zE 's/.*"command" *: *"(([^"\\]|\\.)*)".*/\1/; s/\\\\/\x01/g; s/\\n/\n/g; s/\\t/\t/g; s/\\r//g; s/\\"/"/g; s/\\\//\//g')
-  [[ $COMMAND == *\\* ]] && unreadable
-  COMMAND=${COMMAND//$'\x01'/\\}
-fi
+command -v jq >/dev/null || unreadable "It needs jq (macOS 15+ ships it; otherwise: brew install jq / apt install jq / winget install jqlang.jq)."
+COMMAND=$(printf '%s' "$INPUT" | jq -er '.tool_input.command | strings' 2>/dev/null) || unreadable
+[[ -n $COMMAND ]] || unreadable
 
 block() {
   echo "BLOCKED: '$COMMAND' runs $1. The user has prevented you from doing this." >&2
   exit 2
 }
 
-TEXT=${COMMAND//$'\\\n'/}
-TEXT=$(printf '%s' "$TEXT" | sed -zE "s/(commit( +-[a-zA-Z-]+)*) +(-[a-zA-Z]*m|--message) *'[^'\`\$]*'/\1 -m x/g; s/(commit( +-[a-zA-Z-]+)*) +(-[a-zA-Z]*m|--message) *\"[^\"\`\$\\\\]*\"/\1 -m x/g")
-TEXT=$(printf '%s' "$TEXT" | tr ';&|()`\t' '\n\n\n\n\n\n ')
+# Normalize: join line continuations, drop quoting and escapes (\git, "git", pu\sh),
+# then split on every shell separator so each git call starts its own segment.
+split() { tr -d "\\\\\"'" | tr ';&|()`<>{}!\t' '\n\n\n\n\n\n\n\n\n\n\n '; }
+JOINED=${COMMAND//$'\\\n'/}
+TEXT=$(printf '%s' "$JOINED" | split)
+# Second view that keeps quoted words whole (git -C "/a b" push): spaces inside
+# quotes become \001 before the quotes are dropped.
+KEPT=$(printf '%s' "$JOINED" | awk '{
+  out = ""
+  for (i = 1; i <= length($0); i++) {
+    c = substr($0, i, 1)
+    if (q == "" && (c == "\"" || c == "\047")) { q = c; continue }
+    if (c == q) { q = ""; continue }
+    if (q != "" && (c == " " || c == "\t")) c = "\001"
+    out = out c
+  }
+  print out
+}' | split)
 
 FLAG_F='[[:space:]](-[a-zA-Z]*f[a-zA-Z]*|--f|--fo|--for|--forc|--force)[[:space:]]'
 ALL_FILES='[[:space:]](\.|\./|\.\.|:/|\*)[[:space:]]'
-VALUE='(([^[:space:]"'\'']|"[^"]*"|'\''[^'\'']*'\'')+)'
 
 check() {
-  local seg=" $1 " rest sub args a v aliases=()
-  [[ $seg =~ [[:space:]/\"\']git[[:space:]]+(.*)$ ]] || return 0
-  rest=" ${BASH_REMATCH[1]}"
+  local rest=$1 sub args a v aliases=()
   while :; do
-    if [[ $rest =~ ^[[:space:]]+(-C|-c|--git-dir|--work-tree|--namespace|--config-env)[[:space:]]+$VALUE(.*)$ ]]; then
-      [[ ${BASH_REMATCH[1]} == -c ]] && aliases+=("${BASH_REMATCH[2]//[\"\']/}")
-      rest=${BASH_REMATCH[4]}
-    elif [[ $rest =~ ^[[:space:]]+(--help|-h)[[:space:]] ]]; then
-      return 0
+    if [[ $rest =~ ^[[:space:]]+(-C|-c|--git-dir|--work-tree|--namespace|--config-env)[[:space:]]+([^[:space:]]+)(.*)$ ]]; then
+      [[ ${BASH_REMATCH[1]} == -c ]] && aliases+=("${BASH_REMATCH[2]}")
+      rest=${BASH_REMATCH[3]}
     elif [[ $rest =~ ^[[:space:]]+-[^[:space:]]*(.*)$ ]]; then
       rest=${BASH_REMATCH[1]}
     else
       break
     fi
   done
-  rest=${rest//[\"\']/}
   read -r sub args <<< "$rest"
   args=" $args "
-  [[ $args =~ ^[[:space:]](--help|-h)[[:space:]] ]] && return 0
 
   for a in "${aliases[@]}"; do
     [[ $a == alias.$sub=* ]] || continue
     v=${a#*=}
-    if [[ $v == !* ]]; then check "${v#!}"; else check "git $v $args"; fi
+    v=${v//$'\001'/ }
+    check " $v $args"
   done
 
   case "$sub" in
-    push) block "git push" ;;
+    push|send-pack) block "git push" ;;
+    subtree) [[ $args =~ ^[[:space:]]push[[:space:]] ]] && block "git push" ;;
     reset) [[ $args =~ [[:space:]]--ha(r|rd)?[[:space:]] ]] && block "git reset --hard" ;;
     clean)
-      [[ ${args%%[[:space:]]#*} =~ ^[[:space:]]*((-[a-df-zA-Z]*|--[a-z-]+)[[:space:]]+)*(-[a-df-zA-Z]*n[a-zA-Z]*|--dry-run)([[:space:]]|$) ]] && return 0
+      [[ ! $args =~ --no-dry-run && ${args%%[[:space:]]#*} =~ ^[[:space:]]*((-[a-df-zA-Z]*|--[a-z-]+)[[:space:]]+)*(-[a-df-zA-Z]*n[a-zA-Z]*|--dry-run)([[:space:]]|$) ]] && return 0
       [[ $args =~ $FLAG_F ]] && block "git clean -f" ;;
     branch)
       [[ $args =~ [[:space:]]-[a-zA-Z]*D[a-zA-Z]*[[:space:]] ]] && block "git branch -D"
       [[ $args =~ [[:space:]](-[a-zA-Z]*d[a-zA-Z]*|--de[a-z]*)[[:space:]] && $args =~ $FLAG_F ]] && block "git branch -D" ;;
     checkout) [[ $args =~ $ALL_FILES || $args =~ $FLAG_F ]] && block "a checkout that drops changes" ;;
-    restore) [[ $args =~ $ALL_FILES ]] && block "git restore ." ;;
+    restore)
+      # --staged alone only unstages; with --worktree it discards edits too.
+      [[ $args =~ $ALL_FILES ]] || return 0
+      [[ $args =~ [[:space:]](--staged|-S)[[:space:]] && ! $args =~ [[:space:]](--worktree|-W|-[a-zA-Z]*W[a-zA-Z]*)[[:space:]] ]] || block "git restore ." ;;
     switch) [[ $args =~ $FLAG_F || $args =~ [[:space:]]--di[a-z-]*[[:space:]] ]] && block "a switch that drops changes" ;;
-    stash) [[ $args =~ ^[[:space:]](drop|clear)[[:space:]] ]] && block "git stash drop" ;;
+    stash) [[ $args =~ ^[[:space:]](drop|clear)[[:space:]] ]] && block "git stash ${BASH_REMATCH[1]}" ;;
   esac
   return 0
 }
 
-while IFS= read -r seg; do
-  check "$seg"
-done <<< "$TEXT"
+# Check every git call in every segment, not only the first one.
+for view in "$TEXT" "$KEPT"; do
+  while IFS= read -r seg; do
+    seg=" $seg "
+    while [[ $seg =~ [[:space:]/]git([[:space:]].*)$ ]]; do
+      seg=${BASH_REMATCH[1]}
+      check "$seg"
+    done
+  done <<< "$view"
+done
+
+# Floor: the plain substring patterns of the original hook, plus git config
+# injection. Whatever the parser above misses, these still catch.
+# ponytail: `g=git; $g push` and aliases from ~/.gitconfig still get through; a
+# real shell parser is the upgrade path.
+printf '%s\n' "$TEXT" | grep -qE 'git[[:space:]]+(push|reset[[:space:]]+--hard|clean[[:space:]]+-f|branch[[:space:]]+-D)|git[[:space:]]+(checkout|restore)[[:space:]]+\.([[:space:]]|$)|push[[:space:]]+--force|reset[[:space:]]+--hard|--config-env|GIT_CONFIG_' \
+  && block "a blocked git pattern"
 
 exit 0
