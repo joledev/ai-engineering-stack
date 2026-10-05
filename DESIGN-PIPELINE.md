@@ -1,6 +1,6 @@
 # Design pipeline (iOS, OpenPencil)
 
-How to run `/ui:design-loop` in your own project with Claude Code and this stack.
+How to run `/design-loop` in your own project with Claude Code and this stack.
 The skill designs or improves iOS screens like Claude Design (variants you pick
 from, then iteration), has a read-only subagent audit the result, stops for your
 approval, applies only what you approved, and audits again.
@@ -24,7 +24,7 @@ change a diff the agent can make, review and revert.
 | What | Why | How |
 |------|-----|-----|
 | This stack's agents | The audit runs in the read-only `design-auditor` | `install-global.sh` once per machine |
-| The skill | `/ui:design-loop` | `init-project.sh <project> --stack=ios` |
+| The skill | `/design-loop` | `init-project.sh <project> --stack=ios` |
 | Node | Runs the build | Tested with Node 24 |
 | `@open-pencil/cli` | Builds, exports PNGs, inspects the file | Installed in the design folder (see below). It is a dependency: agree on it with your team first |
 | SF Pro | iOS system font, used by the renderer | Download from Apple into `~/Library/Fonts`. Apple's license: never commit it |
@@ -157,7 +157,7 @@ makes it stop and ask: it never guesses a command. Fill in your paths:
 ```markdown
 ## Design pipeline
 
-Used by `/ui:design-loop`. Run every command from the repo root.
+Used by `/design-loop`. Run every command from the repo root.
 
 | Key | Value |
 |-----|-------|
@@ -179,9 +179,9 @@ only the approved rows, so review the PNGs yourself.
 ## 4. Run the loop
 
 ```
-/ui:design-loop Ajustes            improve a section (you don't need to know how)
-/ui:design-loop R7                 design the screen for requirement R7
-/ui:design-loop audit Ajustes      audit only, no redesign
+/design-loop Ajustes               improve a section (you don't need to know how)
+/design-loop R7                    design the screen for requirement R7
+/design-loop audit Ajustes         audit only, no redesign
 ```
 
 It works like Claude Design: you ask, it designs, you look at the result.

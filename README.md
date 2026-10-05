@@ -8,13 +8,13 @@ rules, the same reviewers and the same delivery loop.
 There is no application here. It is markdown and bash.
 
 **Claude Code only.** Support for Windsurf, OpenCode and other editors was
-removed. Everything targets Claude Code's own conventions (`.claude/commands/`,
+removed. Everything targets Claude Code's own conventions (`.claude/skills/`,
 `~/.claude/agents/`, root `CLAUDE.md`).
 
 ```
   ~/.claude/  (global layer, once per machine)        your-project/  (per project)
   ┌──────────────────────────────────────┐            ┌──────────────────────────────────┐
-  │ agents/   -> global/agents/          │            │ .claude/commands -> skills/       │
+  │ agents/   -> global/agents/          │            │ .claude/skills/<name> -> skills/  │
   │ skills/   -> 7 everyday skills       │            │   (filtered by --stack)           │
   │ settings.json  agent: architect      │            │ CLAUDE.md + .claude/ context tree │
   │ statusline-command.sh                │            │ core.hooksPath -> commit-msg hook │
@@ -214,8 +214,8 @@ into this stack:
 
 | Committed | Ignored |
 |-----------|---------|
-| `CLAUDE.md` | `.claude/commands` (symlink) |
-| `.claude/business/`, `architecture/`, `domains/`, `engineering/` | `.claude/agents` (symlink) |
+| `CLAUDE.md` | `.claude/skills/<skill>` (one symlink per skill) |
+| `.claude/business/`, `architecture/`, `domains/`, `engineering/` | |
 | `.claude/settings.json` | `.claude/settings.local.json` |
 
 > [!IMPORTANT]
@@ -327,4 +327,4 @@ and the `ponytail` plugin. See [Tooling](#tooling).
 | `global/githooks/commit-msg` | Commit message hook, referenced via `core.hooksPath` |
 | `global-rules.md` | Global engineering standards |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide |
-| `DESIGN-PIPELINE.md` | Setting up `/ui:design-loop` in a project: OpenPencil, fonts, pipeline keys |
+| `DESIGN-PIPELINE.md` | Setting up `/design-loop` in a project: OpenPencil, fonts, pipeline keys |

@@ -71,12 +71,19 @@ if [ -e "$STATUSLINE" ] && [ ! -L "$STATUSLINE" ]; then
     echo "statusline: existing script backed up"
 fi
 ln -sfn "$STACK_DIR/global/statusline-command.sh" "$STATUSLINE"
+if [ "$(jq -r '.statusLine.refreshInterval // empty' "$SETTINGS")" = "3000" ]; then
+    TMP="$(mktemp)"
+    jq '.statusLine.refreshInterval = 3' "$SETTINGS" > "$TMP"
+    cat "$TMP" > "$SETTINGS"
+    rm -f "$TMP"
+    echo "statusline: refreshInterval 3000 -> 3 (it is in seconds)"
+fi
 if [ -n "$(jq -r '.statusLine.command // empty' "$SETTINGS")" ]; then
     echo "statusline: linked; statusLine already configured, left as is"
 else
     TMP="$(mktemp)"
-    jq --arg c "bash $STATUSLINE" \
-        '.statusLine = {type: "command", command: $c, refreshInterval: 3000}' "$SETTINGS" > "$TMP"
+    jq --arg c "bash $(printf '%q' "$STATUSLINE")" \
+        '.statusLine = {type: "command", command: $c, refreshInterval: 3}' "$SETTINGS" > "$TMP"
     cat "$TMP" > "$SETTINGS"
     rm -f "$TMP"
     echo "statusline: linked and set in settings"
