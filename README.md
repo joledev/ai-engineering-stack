@@ -194,7 +194,9 @@ Layer audits per stack — **audit-layer-boundaries** (web), **dotnet-clean-arch
 **design-loop** (ios): design → audit → approve → apply → re-audit for screens in a
 code-generated design file. Its audit checklist is built from wondelai/skills,
 Apple HIG and WCAG; [ui/README.md](./skills/ui/README.md#sources) lists every
-source, what was taken and what was left out.
+source, what was taken and what was left out. To set it up in a project
+(OpenPencil, fonts, the `## Design pipeline` section), see
+[DESIGN-PIPELINE.md](./DESIGN-PIPELINE.md).
 
 ### `misc/` (1)
 See [misc/README.md](./skills/misc/README.md).
@@ -223,3 +225,4 @@ dispatches the rest as subagents: one prompt in, one report back.
 | `global-rules.md` | Global engineering standards |
 | `PERSISTENT-MEMORY.md` | claude-mem + engram memory guide, Obsidian read-only |
 | `OBSIDIAN-INTEGRATION.md` | Obsidian vault symlink bridge |
+| `DESIGN-PIPELINE.md` | Setting up `/ui:design-loop` in a project: OpenPencil, fonts, pipeline keys |

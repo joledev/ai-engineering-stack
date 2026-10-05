@@ -2,7 +2,7 @@
 
 Design skills for native apps. Installed with `--stack=ios`.
 
-- **[design-loop](./design-loop/SKILL.md)** — Create or improve screens in a code-generated design file, audit them in a fresh subagent against an iOS checklist, stop for approval, apply only the approved findings, re-audit.
+- **[design-loop](./design-loop/SKILL.md)** — Create or improve screens in a code-generated design file, audit them in a fresh subagent against an iOS checklist, stop for approval, apply only the approved findings, re-audit. Setup guide: [DESIGN-PIPELINE.md](../../DESIGN-PIPELINE.md).
 
 ## Sources
 
