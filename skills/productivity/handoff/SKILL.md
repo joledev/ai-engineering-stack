@@ -2,11 +2,11 @@
 name: handoff
 description: >
   Generate a structured handoff document for the current session — what was done,
-  current state, pending work, blockers, and next steps — and copy it to the OS
-  clipboard to paste into the next chat. Writes no file (unlike
-  claude-mem:handoff, which writes HANDOFF.md). Use when the user says /handoff
-  or wants to hand the session to another chat or person via clipboard.
-version: "1.1.0"
+  current state, pending work, blockers, and next steps — and print it as one
+  fenced block the user copies with /copy into the next chat. Writes no file
+  (unlike claude-mem:handoff, which writes HANDOFF.md). Use when the user says
+  /handoff or wants to hand the session to another chat or person.
+version: "1.2.0"
 modes: [architect]
 stacks: [all]
 argument-hint: "What will the next session be used for?"
@@ -100,30 +100,25 @@ issues, commits, diffs). Reference them by path or URL instead.
 
 ---
 
-## Phase 3 — Deliver to Clipboard
+## Phase 3 — Deliver as a Code Block
 
-**Do not save a file** in the workspace or temp directory. **Copy the full handoff document to the OS clipboard** so the user can paste it into the next chat.
+**Do not save a file** and **do not run `pbcopy`, `xclip`, `wl-copy` or `clip`.**
+The Bash sandbox blocks clipboard access, and excluding those commands from the
+sandbox makes every run prompt for permission. Print the document instead.
 
-### Clipboard delivery
-
-Pipe the finished document to the system clipboard in a single shell invocation:
-
-| OS | Command |
-|----|---------|
-| macOS | `pbcopy` (e.g. `printf '%s' "$content" \| pbcopy` or `pbcopy < handoff.md`) |
-| Linux (X11) | `xclip -selection clipboard` |
-| Linux (Wayland) | `wl-copy` |
-| Windows | `clip` |
-
-Use a heredoc or temp file only if the shell needs it; **delete any temp file immediately after copying**. Never leave a handoff file behind in the workspace.
+Print the full handoff document in your reply as **one fenced block** tagged
+`markdown`. Open and close it with four backticks (` ```` `) so any triple-backtick
+fence inside the document does not end the block early.
 
 ### Report to user
 
-After copying, tell the user briefly — e.g. "Copied to clipboard — paste into your next chat with Cmd+V". Do **not** report a file path (there is none).
+Right after the block, one line telling the user to run `/copy` and pick that
+block, then paste it into the next chat with Cmd+V. Do **not** report a file
+path (there is none).
 
 ### Optional — save to memory
 
-If the session had significant architectural decisions, decisions about approach, or non-obvious context, **offer** to save a project memory with the key facts via claude-mem. This is independent of the clipboard copy and only happens if the user accepts.
+If the session had significant architectural decisions, decisions about approach, or non-obvious context, **offer** to save a project memory with the key facts via claude-mem. This is independent of the handoff block and only happens if the user accepts.
 
 ---
 
@@ -135,4 +130,4 @@ If the session had significant architectural decisions, decisions about approach
 - **File paths must be real:** Every file path you list must have been seen in this session or verified via `git`.
 - **Be specific:** "Updated the glucose wizard" is bad. "Added `horaActual()` to `glucosa.ts:45` and wired it into `RegistroGlucosaMovil`" is good.
 - **Quick Resume must be copy-pasteable** as a conversation opener.
-- **Clipboard, not file:** The handoff goes to the clipboard. Never write a handoff file into the workspace.
+- **Code block, not file or clipboard:** The handoff is printed for `/copy`. Never write a handoff file, never call a clipboard command.
