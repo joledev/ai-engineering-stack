@@ -239,6 +239,35 @@ else
     echo "WARNING: CLAUDE.md already exists, skipping."
 fi
 
+# 10. Commit message hook, versioned in .githooks/ so it travels with the repo.
+# Each clone enables it once with `git config core.hooksPath .githooks`.
+if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
+    mkdir -p .githooks
+    if [ ! -f .githooks/commit-msg ]; then
+        cp "$STACK_DIR/templates/githooks/commit-msg" .githooks/commit-msg
+        chmod +x .githooks/commit-msg
+        echo "OK: Created .githooks/commit-msg"
+    else
+        echo "WARNING: .githooks/commit-msg already exists, skipping."
+    fi
+    HOOKS_PATH="$(git config --local core.hooksPath)"
+    # core.hooksPath replaces .git/hooks entirely, so never switch it over live hooks.
+    LIVE_HOOK="$(find "$(git rev-parse --git-path hooks)" -type f ! -name '*.sample' 2>/dev/null | head -1)"
+    if [ "$HOOKS_PATH" = ".githooks" ]; then
+        echo "OK: core.hooksPath already points to .githooks"
+    elif [ -n "$HOOKS_PATH" ]; then
+        echo "WARNING: core.hooksPath is '$HOOKS_PATH' (husky?). Not overriding it; call .githooks/commit-msg from there."
+    elif [ -n "$LIVE_HOOK" ]; then
+        echo "WARNING: .git/hooks has live hooks that core.hooksPath would disable. Move them to .githooks/, then run:"
+        echo "    git config core.hooksPath .githooks"
+    else
+        git config core.hooksPath .githooks
+        echo "OK: Enabled .githooks (core.hooksPath)"
+    fi
+else
+    echo "WARNING: Not a git repository, skipping the commit-msg hook. Run git init, then re-run this script."
+fi
+
 echo ""
 echo ".NET Initialization complete for $PROJECT_NAME!"
 echo ""

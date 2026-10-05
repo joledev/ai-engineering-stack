@@ -12,6 +12,7 @@ init-project.sh                     project setup, --stack aware
 init-dotnet-project.sh              same, for .NET (defaults to --stack=dotnet)
 install-global.sh                   user-level setup, once per machine
 global/statusline-command.sh        statusline, linked by install-global.sh
+templates/githooks/commit-msg       commit message hook, copied into <project>/.githooks/ by init
 global-rules.md                     engineering standards shipped to projects
 ```
 

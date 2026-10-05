@@ -38,9 +38,8 @@ These live in `~/.claude/` and are set by hand. `install-global.sh` does not tou
   `git -C <dir>` form; `rm -rf /*` and `rm -rf ~*`.
 - **Ask rules** for commands that destroy uncommitted work: `git reset --hard`,
   `clean -f`, `branch -D`, `checkout .`, `restore .`, each with its `git -C` form.
-- **Commit hook** `~/.claude/hooks/validate-commit.py` (PreToolUse on Bash): blocks
-  a `git commit` whose subject is neither conventional (`fix(scope): ...`) nor
-  ticket-first (`OG-4703: ...`). Errors go to stderr so the agent sees why.
+- Commit messages are checked by the git `commit-msg` hook that init installs
+  per project (see "Commit message hook" below), not by a Claude Code hook.
 
 Known gaps:
 
@@ -82,6 +81,22 @@ script links only the matching ones. An Android project has no use for
 
 Omitting the flag installs everything (`all`); `init-dotnet-project.sh` defaults
 to `dotnet`.
+
+### Commit message hook
+
+Init copies `templates/githooks/commit-msg` to `<project>/.githooks/commit-msg`
+and runs `git config core.hooksPath .githooks`. The hook rejects a subject that
+is neither conventional (`fix(scope): ...`) nor ticket-first (`OG-4703: ...`).
+It is POSIX `sh` plus `grep -E`, so it runs wherever git does, Git for Windows included.
+
+- **Commit `.githooks/`.** The hook travels with the repo. Each new clone
+  enables it once with `git config core.hooksPath .githooks`.
+- Init does not change `core.hooksPath` when the repo already sets one (husky)
+  or has live scripts in `.git/hooks/`, since the switch would disable them. It
+  prints what to do instead.
+- Not a git repo yet: init skips the hook. Run `git init`, then init again.
+- A local hook can be skipped with `--no-verify`. To enforce the format for the
+  whole team, check commit messages in CI.
 
 ### After init
 
