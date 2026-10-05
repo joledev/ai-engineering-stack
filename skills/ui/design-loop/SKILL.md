@@ -99,7 +99,10 @@ Copy the current Output to the scratchpad as the pre-apply baseline. Export
 every changed screen (light and dark) and dispatch ONE `design-auditor` subagent
 with a complete prompt: the PNG paths, the screen source files, the Tokens path,
 the Spec requirement IDs, the full text of
-[references/audit-ios.txt](references/audit-ios.txt), and "Report only."
+[references/audit-ios.txt](references/audit-ios.txt) pasted verbatim, and "Report only."
+Never summarize or shorten the checklist: a dropped rule changes severities (the
+"Apple system colors below 4.5:1 are Sev 1" rule is the one that goes missing).
+Don't ask the auditor to write out its reasoning; ask for the table and the evidence.
 
 ## 5. STOP
 
@@ -121,7 +124,7 @@ Wait. Never continue on silence or a partial answer.
 
 ## 7. re-audit
 
-A new `design-auditor` checks the applied rows only. A row still failing goes
+A new `design-auditor` checks the applied rows only, with the same verbatim checklist. A row still failing goes
 back to step 6. After 2 rounds, stop and list what is left.
 
 ## Prerequisites

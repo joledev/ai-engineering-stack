@@ -24,7 +24,6 @@ not design them, so judge what is on the screen, not what was intended.
 - Every finding names its rule ID from the checklist. A problem no rule covers is
   reported with rule `—` and a one-line reason.
 
-Write your reasoning before each severity, never a severity justified afterward.
 Output the findings table from the checklist, highest severity first, then one
 line per screen saying what passed.
 
